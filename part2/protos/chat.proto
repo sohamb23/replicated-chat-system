@@ -1,3 +1,31 @@
+syntax = "proto3";
+
+package greet;
+
+// The chat service definition.
+service Chat {
+    // Sends a message to a user
+    rpc SendMessage (MessageSend) returns (MessageSendResponse) {}
+
+    // Gets a list of undelivered messages for a user
+    rpc GetMessages (MessagesRequest) returns (MessagesResponse) {}
+
+    // Creates a new account
+    rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse) {}
+
+    // Logs into an account
+    rpc Login (LoginRequest) returns (LoginResponse) {}
+
+    // Gets a list of all accounts
+    rpc ListAllAccounts (ListAllAccountsRequest) returns (ListAllAccountsResponse) {}
+
+    // Gets a list of accounts matching a wildcard
+    rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {}
+
+    // Deletes an account
+    rpc DeleteAccount (DeleteAccountRequest) returns (DeleteAccountResponse) {}
+}
+
 // Rquest for an undelivered set of messages using the username
 message MessagesRequest {
     string accountName = 1;
@@ -68,5 +96,4 @@ message DeleteAccountRequest {
 message DeleteAccountResponse {
     bool success = 1;
 }
-
 
