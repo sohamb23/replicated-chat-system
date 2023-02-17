@@ -1,0 +1,72 @@
+// Rquest for an undelivered set of messages using the username
+message MessagesRequest {
+    string accountName = 1;
+}
+
+// Response for a list of messages
+message MessagesResponse {
+    repeated string messages = 1;
+}
+
+// Send a message to a user
+message MessageSend {
+    string accountName = 1;
+    string message = 2;
+}
+
+// Response for a message send
+message MessageSendResponse {
+    bool success = 1;
+}
+
+// Create a new account
+message CreateAccountRequest {
+    string accountName = 1;
+}
+
+// Response for a create account request
+message CreateAccountResponse {
+    bool success = 1;
+}
+
+// Loginto an account using username
+message LoginRequest {
+    string accountName = 1;
+}
+
+// Response for a login request
+message LoginResponse {
+    bool success = 1;
+}
+
+// Request to get the list of all accounts
+message ListAllAccountsRequest {
+}
+
+// Response for a list all accounts request
+
+message ListAllAccountsResponse {
+    repeated string accounts = 1;
+}
+
+// Request to get the list of accounts specified by a text wildcard
+message ListAccountsRequest {
+    string accountWildcard = 1;
+}
+
+// Response for a list accounts request
+message ListAccountsResponse {
+    repeated string accounts = 1;
+}
+
+// Request to delete an account
+message DeleteAccountRequest {
+    string accountName = 1;
+}
+
+// Response for a delete account request
+message DeleteAccountResponse {
+    bool success = 1;
+}
+
+
