@@ -5,19 +5,16 @@ package greet;
 // The chat service definition.
 service Chat {
     // Sends a message to a user
-    rpc SendMessage (MessageSend) returns (MessageSendResponse) {}
+    rpc SendMessage (MessageSendRequest) returns (MessageSendResponse) {}
 
-    // Gets a list of undelivered messages for a user
-    rpc GetMessages (MessagesRequest) returns (MessagesResponse) {}
+    // Open a stream of messages for a client; should never be called explicitly by user
+    rpc ChatStream (ChatRequest) returns (stream SingleMessage) {}
 
     // Creates a new account
     rpc CreateAccount (CreateAccountRequest) returns (CreateAccountResponse) {}
 
     // Logs into an account
     rpc Login (LoginRequest) returns (LoginResponse) {}
-
-    // Gets a list of all accounts
-    rpc ListAllAccounts (ListAllAccountsRequest) returns (ListAllAccountsResponse) {}
 
     // Gets a list of accounts matching a wildcard
     rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {}
@@ -26,25 +23,27 @@ service Chat {
     rpc DeleteAccount (DeleteAccountRequest) returns (DeleteAccountResponse) {}
 }
 
-// Rquest for an undelivered set of messages using the username
-message MessagesRequest {
-    string accountName = 1;
-}
 
-// Response for a list of messages
-message MessagesResponse {
-    repeated string messages = 1;
-}
-
-// Send a message to a user
-message MessageSend {
-    string accountName = 1;
-    string message = 2;
+// Request to send a message to a user
+message MessageSendRequest {
+    string recipient = 1;
+    string sender = 2;
+    string message = 3;
 }
 
 // Response for a message send
 message MessageSendResponse {
     bool success = 1;
+}
+
+// Request to start a chat stream
+message ChatRequest {
+    string accountName = 1;
+}
+
+message SingleMessage {
+    string sender = 1;
+    string message = 2;
 }
 
 // Create a new account
@@ -57,7 +56,7 @@ message CreateAccountResponse {
     bool success = 1;
 }
 
-// Loginto an account using username
+// Log into an account using username
 message LoginRequest {
     string accountName = 1;
 }
@@ -65,16 +64,6 @@ message LoginRequest {
 // Response for a login request
 message LoginResponse {
     bool success = 1;
-}
-
-// Request to get the list of all accounts
-message ListAllAccountsRequest {
-}
-
-// Response for a list all accounts request
-
-message ListAllAccountsResponse {
-    repeated string accounts = 1;
 }
 
 // Request to get the list of accounts specified by a text wildcard
