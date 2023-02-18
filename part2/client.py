@@ -5,11 +5,9 @@ import threading
 
 
 def listen_for_messages(stub, username):
-    print("started running thread")
     for msg in stub.ChatStream(chat_pb2.ChatRequest(accountName=username)):
         print()
         print("[" + msg.sender + "]: " + msg.message)
-    print("Enter option: ")
 
 # runs the client and allows user to select rpc calls
 def run():
@@ -68,9 +66,6 @@ def run():
             else:
                 print('Invalid option')
             rpc_call = int(input('Enter option: '))
-        if t1:
-            t1.raise_exception()
-            t1.join()
         if usr != '':
             response = stub.Logout(chat_pb2.LogoutRequest(accountName=usr))
         print('Exiting...')
