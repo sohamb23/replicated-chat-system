@@ -16,6 +16,9 @@ service Chat {
     // Logs into an account
     rpc Login (LoginRequest) returns (LoginResponse) {}
 
+    // Logs out of an account
+    rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+
     // Gets a list of accounts matching a wildcard
     rpc ListAccounts (ListAccountsRequest) returns (ListAccountsResponse) {}
 
@@ -64,6 +67,16 @@ message LoginRequest {
 
 // Response for a login request
 message LoginResponse {
+    bool success = 1;
+}
+
+// Log out of an account using username
+message LogoutRequest {
+    string accountName = 1;
+}
+
+// Response for a logout request
+message LogoutResponse {
     bool success = 1;
 }
 

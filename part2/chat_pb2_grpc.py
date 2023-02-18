@@ -35,6 +35,11 @@ class ChatStub(object):
                 request_serializer=chat__pb2.LoginRequest.SerializeToString,
                 response_deserializer=chat__pb2.LoginResponse.FromString,
                 )
+        self.Logout = channel.unary_unary(
+                '/greet.Chat/Logout',
+                request_serializer=chat__pb2.LogoutRequest.SerializeToString,
+                response_deserializer=chat__pb2.LogoutResponse.FromString,
+                )
         self.ListAccounts = channel.unary_unary(
                 '/greet.Chat/ListAccounts',
                 request_serializer=chat__pb2.ListAccountsRequest.SerializeToString,
@@ -79,6 +84,13 @@ class ChatServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Logout(self, request, context):
+        """Logs out of an account
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def ListAccounts(self, request, context):
         """Gets a list of accounts matching a wildcard
         """
@@ -115,6 +127,11 @@ def add_ChatServicer_to_server(servicer, server):
                     servicer.Login,
                     request_deserializer=chat__pb2.LoginRequest.FromString,
                     response_serializer=chat__pb2.LoginResponse.SerializeToString,
+            ),
+            'Logout': grpc.unary_unary_rpc_method_handler(
+                    servicer.Logout,
+                    request_deserializer=chat__pb2.LogoutRequest.FromString,
+                    response_serializer=chat__pb2.LogoutResponse.SerializeToString,
             ),
             'ListAccounts': grpc.unary_unary_rpc_method_handler(
                     servicer.ListAccounts,
@@ -202,6 +219,23 @@ class Chat(object):
         return grpc.experimental.unary_unary(request, target, '/greet.Chat/Login',
             chat__pb2.LoginRequest.SerializeToString,
             chat__pb2.LoginResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Logout(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/greet.Chat/Logout',
+            chat__pb2.LogoutRequest.SerializeToString,
+            chat__pb2.LogoutResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

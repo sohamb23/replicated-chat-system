@@ -9,6 +9,7 @@ def listen_for_messages(stub, username):
     for msg in stub.ChatStream(chat_pb2.ChatRequest(accountName=username)):
         print()
         print("[" + msg.sender + "]: " + msg.message)
+    print("Enter option: ")
 
 # runs the client and allows user to select rpc calls
 def run():
@@ -57,13 +58,21 @@ def run():
                     print("Login failed")
             # Send Message
             elif rpc_call == 6:
-                username = input('Enter username you want to send to: ')
-                msg = input('Enter message: ')
-                response = stub.SendMessage(chat_pb2.MessageSendRequest(recipient=username, sender=usr, message=msg))
-                print("Message sent" if response.success else "Message failed to send")
+                if usr == '':
+                    print('you must log in to send a message')
+                else:
+                    username = input('Enter username you want to send to: ')
+                    msg = input('Enter message: ')
+                    response = stub.SendMessage(chat_pb2.MessageSendRequest(recipient=username, sender=usr, message=msg))
+                    print("Message sent" if response.success else "Message failed to send")
             else:
                 print('Invalid option')
             rpc_call = int(input('Enter option: '))
+        if t1:
+            t1.raise_exception()
+            t1.join()
+        if usr != '':
+            response = stub.Logout(chat_pb2.LogoutRequest(accountName=usr))
         print('Exiting...')
 if __name__ == '__main__':
     run()

@@ -9,6 +9,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
     def __init__(self):
         self.users = set()
         self.chats = dict()
+        self.online = set()
 
     # report failure if account already exists and add user otherwise
     def CreateAccount(self, request, context):
@@ -25,6 +26,8 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         if success:
             print("deleting user: " + request.accountName)
             self.users.discard(request.accountName)
+            self.online.discard(request.accountName) if request.accountName in self.online else print("user is not online")
+            del self.chats[request.accountName] # delete undelivered chats if you are deleting the account
         return chat_pb2.DeleteAccountResponse(success=success)
     
     def ListAccounts(self, request, context):
@@ -38,7 +41,14 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
 
     def Login(self, request, context):
         print("logging in user: " + request.accountName)
+        self.online.add(request.accountName)
         return chat_pb2.LoginResponse(success=request.accountName in self.users)
+
+    def Logout(self, request, context):
+        print("logging out user: " + request.accountName)
+        self.online.remove(request.accountName)
+        return chat_pb2.LogoutResponse(success=request.accountName not in self.online)
+
     
     def SendMessage(self, request, context):
         print(f"received message from {request.sender} to {request.recipient}: {request.message}")
@@ -54,7 +64,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
     def ChatStream(self, request, context):
         user = request.accountName
         print(f"started stream for user: {user}")
-        while True:
+        while user in self.online:
             assert user in self.users, "user does not exist or no longer exists"
             # TODO: add locking for self.chats
             if self.chats[user]:
