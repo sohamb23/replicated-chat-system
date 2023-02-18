@@ -31,8 +31,6 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         return chat_pb2.DeleteAccountResponse(success=success)
     
     def ListAccounts(self, request, context):
-        print(self.users)
-        print(request.accountWildcard)
         # search in users for accounts that match wildcard
         pattern = re.compile(request.accountWildcard)
         accounts = list(filter(lambda user: pattern.search(user) != None, self.users))
@@ -63,12 +61,12 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
     # TODO: gonna have to figure out what happens when account is deleted mid message
     def ChatStream(self, request, context):
         user = request.accountName
-        print(f"started stream for user: {user}")
+        print(f"started chat stream for {user}")
         while user in self.online:
             assert user in self.users, "user does not exist or no longer exists"
             # TODO: add locking for self.chats
             if self.chats[user]:
-                print("sending message to user: " + user)
+                print("sending message to " + user)
                 yield self.chats[user].pop(0)
 
 def serve():

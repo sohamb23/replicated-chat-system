@@ -20,13 +20,16 @@ def run():
         print('5. Login')
         print('6. Send Message')
         print('7. Exit')
-        rpc_call = int(input('Enter option: '))
-        usr = ''
-        t1 = None
+        user_input = input("Enter option: ")   # ask user for which option they want
+        if user_input in ['1', '2', '3', '4', '5', '6', '7']:
+            rpc_call = int(user_input)
+        else:
+            rpc_call = 0
+        usr = ''                                             # the name of the user (initialized to empty string)
         while rpc_call != 7:
             # Creating an account
             if rpc_call == 1:
-                username = input('Enter username that you want to use: ')
+                username = input('Enter username that you want to create: ')
                 response = stub.CreateAccount(chat_pb2.CreateAccountRequest(accountName=username))
                 print("Account Created Successfully" if response.success else "Account Creation Failed")
             # List all accounts
@@ -51,13 +54,13 @@ def run():
                 if response.success:
                     usr = username
                     print("Login successful. Unread and new incoming messages will be shown below...")
-                    t1 = threading.Thread(target=listen_for_messages, args=(stub, username)).start()
+                    threading.Thread(target=listen_for_messages, args=(stub, username)).start()
                 else:
                     print("Login failed")
             # Send Message
             elif rpc_call == 6:
                 if usr == '':
-                    print('you must log in to send a message')
+                    print('You must log in to send a message')
                 else:
                     username = input('Enter username you want to send to: ')
                     msg = input('Enter message: ')
@@ -65,7 +68,11 @@ def run():
                     print("Message sent" if response.success else "Message failed to send")
             else:
                 print('Invalid option')
-            rpc_call = int(input('Enter option: '))
+            user_input = input("Enter option: ")   # ask user for which option they want
+            if user_input in ['1', '2', '3', '4', '5', '6', '7']:
+                rpc_call = int(user_input)
+            else:
+                rpc_call = 0
         if usr != '':
             response = stub.Logout(chat_pb2.LogoutRequest(accountName=usr))
         print('Exiting...')
