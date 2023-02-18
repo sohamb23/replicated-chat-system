@@ -24,6 +24,7 @@ service Chat {
 }
 
 
+
 // Request to send a message to a user
 message MessageSendRequest {
     string recipient = 1;

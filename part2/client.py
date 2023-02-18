@@ -1,12 +1,13 @@
 import chat_pb2
 import chat_pb2_grpc
 import grpc
-import time
 import threading
 
 
 def listen_for_messages(stub, username):
+    print("started running thread")
     for msg in stub.ChatStream(chat_pb2.ChatRequest(accountName=username)):
+        print()
         print("[" + msg.sender + "]: " + msg.message)
 
 # runs the client and allows user to select rpc calls
@@ -20,8 +21,9 @@ def run():
         print('5. Login')
         print('6. Send Message')
         print('7. Exit')
-        rpc_call = input('Enter option: ')
+        rpc_call = int(input('Enter option: '))
         usr = ''
+        t1 = None
         while rpc_call != 7:
             # Creating an account
             if rpc_call == 1:
@@ -30,7 +32,7 @@ def run():
                 print("Account Created Successfully" if response.success else "Account Creation Failed")
             # List all accounts
             elif rpc_call == 2:
-                response = stub.ListAccounts(chat_pb2.ListAccountRequest(accountWildcard = '*'))
+                response = stub.ListAccounts(chat_pb2.ListAccountsRequest(accountWildcard = '.*'))
                 for account in response.accounts:
                     print(account)
             # List accounts by wildcard
@@ -42,7 +44,7 @@ def run():
             elif rpc_call == 4:
                 username = input('Enter username for deletion: ')
                 response = stub.DeleteAccount(chat_pb2.DeleteAccountRequest(accountName=username))
-                print(response.success)
+                print('Account deleted' if response.success else 'Account deletion failed')
             # Login and set up stream for messages
             elif rpc_call == 5:
                 username = input('Enter username: ')
@@ -50,7 +52,7 @@ def run():
                 if response.success:
                     usr = username
                     print("Login successful. Unread and new incoming messages will be shown below...")
-                    threading.Thread(target=listen_for_messages, args=(stub, username)).start()
+                    t1 = threading.Thread(target=listen_for_messages, args=(stub, username)).start()
                 else:
                     print("Login failed")
             # Send Message
@@ -61,7 +63,7 @@ def run():
                 print("Message sent" if response.success else "Message failed to send")
             else:
                 print('Invalid option')
-            rpc_call = input('Enter option: ')
+            rpc_call = int(input('Enter option: '))
         print('Exiting...')
 if __name__ == '__main__':
     run()
