@@ -3,7 +3,7 @@ import chat_pb2_grpc
 import grpc
 import threading
 
-
+# listen for messages from the server
 def listen_for_messages(stub, username):
     for msg in stub.ChatStream(chat_pb2.ChatRequest(accountName=username)):
         print()
@@ -11,8 +11,10 @@ def listen_for_messages(stub, username):
 
 # runs the client and allows user to select rpc calls
 def run():
-    with grpc.insecure_channel('localhost:50051') as channel:
+    with grpc.insecure_channel("10.250.180.4:50051") as channel:
         stub = chat_pb2_grpc.ChatStub(channel)
+
+        # print menu
         print('1. Create Account')
         print('2. List All Accounts')
         print('3. List Account by Wildcard')
@@ -20,12 +22,17 @@ def run():
         print('5. Login')
         print('6. Send Message')
         print('7. Exit')
-        user_input = input("Enter option: ")   # ask user for which option they want
+
+        # ask user for which option they want
+        user_input = input("Enter option: ")               
         if user_input in ['1', '2', '3', '4', '5', '6', '7']:
             rpc_call = int(user_input)
         else:
             rpc_call = 0
-        usr = ''                                             # the name of the user (initialized to empty string)
+        
+        # the name of the user (initialized to empty string)
+        usr = ''        
+
         while rpc_call != 7:
             # Creating an account
             if rpc_call == 1:
@@ -43,6 +50,7 @@ def run():
                 response = stub.ListAccounts(chat_pb2.ListAccountsRequest(accountWildcard=wildcard))
                 for account in response.accounts:
                     print(account)
+            # Delete account
             elif rpc_call == 4:
                 username = input('Enter username for deletion: ')
                 response = stub.DeleteAccount(chat_pb2.DeleteAccountRequest(accountName=username))
@@ -68,13 +76,17 @@ def run():
                     print("Message sent" if response.success else "Message failed to send")
             else:
                 print('Invalid option')
-            user_input = input("Enter option: ")   # ask user for which option they want
+            # allow for user to select another option
+            user_input = input("Enter option: ")
             if user_input in ['1', '2', '3', '4', '5', '6', '7']:
                 rpc_call = int(user_input)
             else:
                 rpc_call = 0
+        # logout if user is logged in and exits
         if usr != '':
             response = stub.Logout(chat_pb2.LogoutRequest(accountName=usr))
         print('Exiting...')
+
+# run the client
 if __name__ == '__main__':
     run()

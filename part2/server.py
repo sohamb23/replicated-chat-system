@@ -2,10 +2,14 @@ import grpc
 import chat_pb2
 import chat_pb2_grpc
 import re
+import ping3
 from concurrent import futures
 
+# Server class that implements the ChatServicer interface defined by proto file.
+# This class is responsible for handling the RPC calls from the client.
 class ChatServicer(chat_pb2_grpc.ChatServicer):
 
+    # initialize the server with empty users, chats, and online lists
     def __init__(self):
         self.users = set()
         self.chats = dict()
@@ -30,6 +34,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
             del self.chats[request.accountName] # delete undelivered chats if you are deleting the account
         return chat_pb2.DeleteAccountResponse(success=success)
     
+    # report failure if account doesn't exist and return list of accounts that match wildcard otherwise
     def ListAccounts(self, request, context):
         # search in users for accounts that match wildcard
         pattern = re.compile(request.accountWildcard)
@@ -37,17 +42,20 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         print("listing users: " + str(accounts))
         return chat_pb2.ListAccountsResponse(accounts=accounts)
 
+    # report failure if account doesn't exist and add user to online list otherwise
     def Login(self, request, context):
         print("logging in user: " + request.accountName)
         self.online.add(request.accountName)
         return chat_pb2.LoginResponse(success=request.accountName in self.users)
 
+    # report failure if account doesn't exist and remove user from online list otherwise
     def Logout(self, request, context):
         print("logging out user: " + request.accountName)
         self.online.remove(request.accountName)
         return chat_pb2.LogoutResponse(success=request.accountName not in self.online)
 
     
+    # report failure if recipient doesn't exist and send message otherwise
     def SendMessage(self, request, context):
         print(f"received message from {request.sender} to {request.recipient}: {request.message}")
         if request.recipient not in self.users:
@@ -58,7 +66,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
             self.chats[request.recipient].append(message)
             return chat_pb2.MessageSendResponse(success=True)
 
-    # TODO: gonna have to figure out what happens when account is deleted mid message
+    # report failure if account doesn't exist and start chat stream otherwise
     def ChatStream(self, request, context):
         user = request.accountName
         print(f"started chat stream for {user}")
@@ -69,13 +77,17 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                 print("sending message to " + user)
                 yield self.chats[user].pop(0)
 
-def serve():
+# start the server
+def serve(ip_address):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     chat_pb2_grpc.add_ChatServicer_to_server(ChatServicer(), server)
-    server.add_insecure_port('[::]:50051')
+    server.add_insecure_port(ip_address + ':50051')
+    print("starting server")
     server.start()
     server.wait_for_termination()
 
+# run the server when this script is executed
 if __name__ == '__main__':
-    serve()
+    ip_address = input("Enter your ip address: ")
+    serve(ip_address)
     
