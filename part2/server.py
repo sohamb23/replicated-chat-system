@@ -54,7 +54,6 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         self.online.remove(request.accountName)
         return chat_pb2.LogoutResponse(success=request.accountName not in self.online)
 
-    
     # report failure if recipient doesn't exist and send message otherwise
     def SendMessage(self, request, context):
         print(f"received message from {request.sender} to {request.recipient}: {request.message}")

@@ -2,6 +2,7 @@ import chat_pb2
 import chat_pb2_grpc
 import grpc
 import threading
+import sys
 
 # listen for messages from the server
 def listen_for_messages(stub, username):
@@ -10,9 +11,7 @@ def listen_for_messages(stub, username):
         print("[" + msg.sender + "]: " + msg.message)
 
 # runs the client and allows user to select rpc calls
-def run(addr):
-    if addr == '':
-        addr = '10.250.180.4'
+def run(addr = '10.250.180.4'):
     with grpc.insecure_channel(addr + ":50051") as channel:
         stub = chat_pb2_grpc.ChatStub(channel)
 
@@ -30,15 +29,19 @@ def run(addr):
         if user_input in ['1', '2', '3', '4', '5', '6', '7']:
             rpc_call = int(user_input)
         else:
-            rpc_call = 0
+            rpc_call = 0 # placeholder for invalid option
         
         # the name of the user (initialized to empty string)
-        usr = ''        
+        usr = ''
 
         while rpc_call != 7:
             # Creating an account
             if rpc_call == 1:
                 username = input('Enter username that you want to create: ')
+                # username cannot be the empty string since this is how we check that the user is logged in
+                while username == '':
+                    username = input('Your username may not be an empty string. \
+                                     Please enter username that you want to create: ')
                 response = stub.CreateAccount(chat_pb2.CreateAccountRequest(accountName=username))
                 print("Account Created Successfully" if response.success else "Account Creation Failed")
             # List all accounts
@@ -91,5 +94,9 @@ def run(addr):
 
 # run the client
 if __name__ == '__main__':
-    addr = input("Enter server ip address to start the client: ")
-    run(addr)
+    if len(sys.argv) == 1:
+        run()
+    elif len(sys.argv) == 2:
+        run(addr = sys.argv[1])
+    else:
+        print("Invalid number of arguments: there is a single optional argument for the server's IP address")

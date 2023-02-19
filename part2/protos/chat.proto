@@ -99,4 +99,3 @@ message DeleteAccountRequest {
 message DeleteAccountResponse {
     bool success = 1;
 }
-
