@@ -2,8 +2,8 @@ import grpc
 import chat_pb2
 import chat_pb2_grpc
 import re
-import ping3
 from concurrent import futures
+import socket
 
 # Server class that implements the ChatServicer interface defined by proto file.
 # This class is responsible for handling the RPC calls from the client.
@@ -78,16 +78,16 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                 yield self.chats[user].pop(0)
 
 # start the server
-def serve(ip_address):
+def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     chat_pb2_grpc.add_ChatServicer_to_server(ChatServicer(), server)
+    ip_address = socket.gethostbyname(socket.gethostname())
     server.add_insecure_port(ip_address + ':50051')
-    print("starting server")
+    print("starting server at " + ip_address)
     server.start()
     server.wait_for_termination()
 
 # run the server when this script is executed
 if __name__ == '__main__':
-    ip_address = input("Enter your ip address: ")
-    serve(ip_address)
+    serve()
     

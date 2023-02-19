@@ -10,8 +10,8 @@ def listen_for_messages(stub, username):
         print("[" + msg.sender + "]: " + msg.message)
 
 # runs the client and allows user to select rpc calls
-def run():
-    with grpc.insecure_channel("10.250.180.4:50051") as channel:
+def run(addr):
+    with grpc.insecure_channel(addr + ":50051") as channel:
         stub = chat_pb2_grpc.ChatStub(channel)
 
         # print menu
@@ -89,4 +89,5 @@ def run():
 
 # run the client
 if __name__ == '__main__':
-    run()
+    addr = input("Enter server ip address to start the client: ")
+    run(addr)
