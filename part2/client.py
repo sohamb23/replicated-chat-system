@@ -11,6 +11,8 @@ def listen_for_messages(stub, username):
 
 # runs the client and allows user to select rpc calls
 def run(addr):
+    if addr == '':
+        addr = '10.250.180.4'
     with grpc.insecure_channel(addr + ":50051") as channel:
         stub = chat_pb2_grpc.ChatStub(channel)
 
