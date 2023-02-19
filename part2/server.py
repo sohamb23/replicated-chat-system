@@ -30,7 +30,10 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         if success:
             print("deleting user: " + request.accountName)
             self.users.discard(request.accountName)
-            self.online.discard(request.accountName) if request.accountName in self.online else print("user is not online")
+            if request.accountName in self.online:
+                self.online.discard(request.accountName)
+            else:
+                print("user is not online")
             del self.chats[request.accountName] # delete undelivered chats if you are deleting the account
         return chat_pb2.DeleteAccountResponse(success=success)
     
