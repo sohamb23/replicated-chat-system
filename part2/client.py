@@ -4,6 +4,10 @@ import grpc
 import threading
 import sys
 
+DEFAULT_SERVER_ADDR = '10.250.180.4'
+# c's address: '10.228.32.66'
+
+
 # listen for messages from the server
 def listen_for_messages(stub, username):
     for msg in stub.ChatStream(chat_pb2.ChatRequest(accountName=username)):
@@ -11,7 +15,7 @@ def listen_for_messages(stub, username):
         print("[" + msg.sender + "]: " + msg.message)
 
 # runs the client and allows user to select rpc calls
-def run(addr = '10.250.180.4'):
+def run(addr = DEFAULT_SERVER_ADDR):
     with grpc.insecure_channel(addr + ":50051") as channel:
         stub = chat_pb2_grpc.ChatStub(channel)
 

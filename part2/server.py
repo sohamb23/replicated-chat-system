@@ -3,7 +3,9 @@ import chat_pb2
 import chat_pb2_grpc
 import re
 from concurrent import futures
+from threading import Lock
 import socket
+from collections import defaultdict
 
 # Server class that implements the ChatServicer interface defined by proto file.
 # This class is responsible for handling the RPC calls from the client.
@@ -11,73 +13,98 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
 
     # initialize the server with empty users, chats, and online lists
     def __init__(self):
+        self.users_lock = Lock() # lock for both self.users and self.online
         self.users = set()
-        self.chats = dict()
+        self.chat_locks = defaultdict(lambda: Lock()) # chats for each k, v pair in self.chats
+        self.chats = defaultdict(lambda: [])
         self.online = set()
 
     # report failure if account already exists and add user otherwise
     def CreateAccount(self, request, context):
-        success = request.accountName not in self.users
-        if success:
-            print("adding user: " + request.accountName)
-            self.users.add(request.accountName)
-            self.chats[request.accountName] = []
+        user = request.accountName
+        with self.users_lock:
+            success = user not in self.users
+            if success:
+                print("adding user: " + user)
+                self.users.add(user)
         return chat_pb2.CreateAccountResponse(success=success)
     
     # report failure if account doesn't exist and delete user otherwise
     def DeleteAccount(self, request, context):
-        success = request.accountName in self.users
-        if success:
-            print("deleting user: " + request.accountName)
-            self.users.discard(request.accountName)
-            if request.accountName in self.online:
-                self.online.discard(request.accountName)
-            else:
-                print("user is not online")
-            del self.chats[request.accountName] # delete undelivered chats if you are deleting the account
+        user = request.accountName
+        with self.users_lock:
+            success = user in self.users
+            if success:
+                print("deleting user: " + user)
+                self.users.discard(user)
+                self.online.discard(user)
+                with self.chat_locks[user]:
+                    del self.chats[user] # delete undelivered chats if you are deleting the account
+                del self.chat_locks[user]
         return chat_pb2.DeleteAccountResponse(success=success)
     
     # report failure if account doesn't exist and return list of accounts that match wildcard otherwise
     def ListAccounts(self, request, context):
         # search in users for accounts that match wildcard
         pattern = re.compile(request.accountWildcard)
-        accounts = list(filter(lambda user: pattern.search(user) != None, self.users))
+        with self.users_lock:
+            accounts = list(filter(lambda user: pattern.search(user) != None, self.users))
         print("listing users: " + str(accounts))
         return chat_pb2.ListAccountsResponse(accounts=accounts)
 
     # report failure if account doesn't exist and add user to online list otherwise
     def Login(self, request, context):
-        print("logging in user: " + request.accountName)
-        self.online.add(request.accountName)
-        return chat_pb2.LoginResponse(success=request.accountName in self.users)
+        user = request.accountName
+        print("logging in user: " + user)
+        with self.users_lock:
+            self.online.add(user)
+            success = user in self.users
+        return chat_pb2.LoginResponse(success=success)
 
     # report failure if account doesn't exist and remove user from online list otherwise
     def Logout(self, request, context):
-        print("logging out user: " + request.accountName)
-        self.online.remove(request.accountName)
-        return chat_pb2.LogoutResponse(success=request.accountName not in self.online)
+        user = request.accountName
+        print("logging out user: " + user)
+        with self.users_lock:
+            success = user in self.online
+            self.online.discard(user)
+        return chat_pb2.LogoutResponse(success=success)
 
     # report failure if recipient doesn't exist and send message otherwise
     def SendMessage(self, request, context):
-        print(f"received message from {request.sender} to {request.recipient}: {request.message}")
-        if request.recipient not in self.users:
+        sender = request.sender
+        recipient = request.recipient
+        message = request.message
+        print(f"received message from {sender} to {recipient}: {message}")
+        self.users_lock.acquire(blocking=True)
+        if recipient not in self.users:
+            self.users_lock.release()
             return chat_pb2.MessageSendResponse(success=False)
         else:
-            # TODO: add locking for self.chats
-            message = chat_pb2.SingleMessage(sender=request.sender, message=request.message)
-            self.chats[request.recipient].append(message)
+            self.users_lock.release()
+            message = chat_pb2.SingleMessage(sender=sender, message=message)
+            with self.chat_locks[recipient]:
+                self.chats[recipient].append(message)
             return chat_pb2.MessageSendResponse(success=True)
 
     # report failure if account doesn't exist and start chat stream otherwise
     def ChatStream(self, request, context):
         user = request.accountName
         print(f"started chat stream for {user}")
+        # always make sure to release this; note that this needs to intermittently release
+        self.users_lock.acquire(blocking=True)
         while user in self.online:
             assert user in self.users, "user does not exist or no longer exists"
-            # TODO: add locking for self.chats
-            if self.chats[user]:
-                print("sending message to " + user)
-                yield self.chats[user].pop(0)
+            # release so that the streams aren't constantly holding onto the lock
+            self.users_lock.release()
+            with self.chat_locks[user]:
+                if self.chats[user]:
+                    print("sending message to " + user)
+                    yield self.chats[user].pop(0)
+            # reacquire lock before checking while condition
+            self.users_lock.acquire(blocking=True)
+        # release lock before stopping stream
+        self.users_lock.release()
 
 # start the server
 def serve():
