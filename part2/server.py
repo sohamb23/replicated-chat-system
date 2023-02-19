@@ -82,9 +82,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
 # start the server
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    chat_pb2_grpc.add_ChatServicer_to_server(ChatServicer(), server)
-    ip_address = socket.gethostbyname(socket.gethostname())
-    server.add_insecure_port(ip_address + ':50051')
+    chat_pb2_grpc.add_ChatServicer_to_server(ChatServicer(), server) 
+
+    ip_address = socket.gethostbyname(socket.gethostname()) # get ip address of server
+    server.add_insecure_port(ip_address + ':50051')         # add port to ip address
+
     print("starting server at " + ip_address)
     server.start()
     server.wait_for_termination()

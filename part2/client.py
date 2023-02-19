@@ -38,7 +38,7 @@ def run(addr = '10.250.180.4'):
             # Creating an account
             if rpc_call == 1:
                 username = input('Enter username that you want to create: ')
-                # username cannot be the empty string since this is how we check that the user is logged in
+                # username cannot be the empty string since this is how we check that the user is logged 
                 while username == '':
                     username = input('Your username may not be an empty string. \
                                      Please enter username that you want to create: ')
