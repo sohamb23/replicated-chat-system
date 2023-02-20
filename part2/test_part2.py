@@ -54,6 +54,7 @@ class TestClient:
         self.client.Login('test1')
         response = self.client.SendMessage('test2', 'hello')
         assert response == True
+
     
     def cleanup():
         os.system('pkill -f server.py')
