@@ -42,6 +42,8 @@ class Client:
     # Logout of the server.
     def Logout(self):
         response = self.stub.Logout(chat_pb2.LogoutRequest(accountName=self.username))
+        if response.success:
+            self.username = ''
         return response.success
 
     # Send a message to the given recipient.
@@ -135,7 +137,7 @@ def run(addr = DEFAULT_SERVER_ADDR):
             rpc_call = int(user_input)
         else:
             rpc_call = 0
-            
+
     # Logout if the user is logged in
     if client.username != '':
         client.Logout()
