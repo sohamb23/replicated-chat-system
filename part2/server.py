@@ -15,7 +15,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
     def __init__(self):
         self.users_lock = Lock() # lock for both self.users and self.online
         self.users = set()
-        self.chat_locks = defaultdict(lambda: Lock()) # chats for each k, v pair in self.chats
+        self.chat_locks = defaultdict(lambda: Lock()) # locks for each k, v pair in self.chats
         self.chats = defaultdict(lambda: [])
         self.online = set()
 
