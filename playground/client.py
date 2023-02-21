@@ -18,7 +18,6 @@ class Client:
         transmission = str((method_code, args)).encode("utf-8")
         self.sock.sendall(transmission)
         data = self.sock.recv(1024)
-        print(data)
         return eval(data.decode("utf-8"))
 
     # Create an account with the given username.
