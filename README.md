@@ -18,4 +18,10 @@ After you launch the client, you will be shown a menu with seven options:
 
 The user then types a number specifying the option they want. After that, they specify the arguments. The client sends a message to the server, the server performs the requested action, and reports back the status of the request back to the client. The user can keep on specifying options as they please. Once the user is done, they can exit by typing 7
 
+## Running Tests
+
+You can test the client server interaction by navigating to either the `part1` or `part2` subdirectory and running `pytest test_part[1/2].py`. The test will simulate launching a server and client and report whether it can perform the essential functions.
+
+
+
 
