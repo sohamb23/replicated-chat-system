@@ -18,6 +18,7 @@ class Client:
         transmission = str((method_code, args)).encode("utf-8")
         self.sock.sendall(transmission)
         data = self.sock.recv(1024)
+        print(data)
         return eval(data.decode("utf-8"))
 
     # Create an account with the given username.
@@ -71,7 +72,7 @@ class Client:
 # Run the client.
 def run(addr = DEFAULT_SERVER_ADDR):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((DEFAULT_SERVER_ADDR, PORT))
+        s.connect((addr, PORT))
         client = Client(s, addr)
         client.printMenu()
         user_input = input("Enter option: ")
