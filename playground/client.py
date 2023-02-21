@@ -1,15 +1,19 @@
 import socket
 import threading
 import sys
-from server import SERVER_METHODS
+from server import SERVER_METHODS, SingleMessage, STREAM_CODE
+import types
+import selectors
 
 DEFAULT_SERVER_ADDR = "10.250.28.57"
 PORT = 50051
 
+sel = selectors.DefaultSelector()
+
 class Client:
-    def __init__(self, sock, addr):
+    def __init__(self, sock, server_addr):
         self.username = ''
-        self.addr = addr
+        self.server_addr = server_addr
         self.sock = sock
 
     def run_service(self, method, args):
@@ -52,10 +56,28 @@ class Client:
 
     # Listen for messages from the server.
     def ListenForMessages(self):
-        return
-        for msg in self.run_service("ChatStream", (self.username,)):
-            print()
-            print("[" + msg.sender + "]: " + msg.message)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            # connect and initiate stream
+            s.connect((self.server_addr, PORT))
+            transmission = str((STREAM_CODE, (self.username,))).encode("utf-8")
+            s.sendall(transmission)
+            # setup selector to listen for read events
+            data = types.SimpleNamespace(addr=self.server_addr, inb=b"", outb=b"")
+            events = selectors.EVENT_READ
+            sel.register(s, events, data=data)
+
+            # process events and print messages received
+            while True:
+                events = sel.select(timeout=None)
+                for key, mask in events:
+                    if key.data is None:
+                        raise Exception("Shouldn't be accepting connections to socket reserved for listening \
+                                        to messages")
+                    data = s.recv(1024)
+                    msg = eval(data.decode("utf-8"))
+                    assert type(msg) == SingleMessage
+                    print()
+                    print("[" + msg.sender + "]: " + msg.message)
     
     # Print the menu for the client.
     def printMenu(self):
@@ -69,10 +91,10 @@ class Client:
     
 
 # Run the client.
-def run(addr = DEFAULT_SERVER_ADDR):
+def run(server_addr = DEFAULT_SERVER_ADDR):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((addr, PORT))
-        client = Client(s, addr)
+        s.connect((server_addr, PORT))
+        client = Client(s, server_addr)
         client.printMenu()
         user_input = input("Enter option: ")
         if user_input in ['1', '2', '3', '4', '5', '6', '7']:
@@ -152,6 +174,6 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         run()
     elif len(sys.argv) == 2:
-        run(addr = sys.argv[1])
+        run(server_addr = sys.argv[1])
     else:
         print("Invalid number of arguments: there is a single optional argument for the server's IP address")

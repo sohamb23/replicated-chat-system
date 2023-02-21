@@ -2,7 +2,7 @@ import socket
 import selectors
 import types
 import re
-from threading import Lock
+from threading import Lock, Thread
 from collections import defaultdict, namedtuple
 
 sel = selectors.DefaultSelector()
@@ -84,7 +84,7 @@ class Server():
             return True
 
     # report failure if account doesn't exist and start chat stream otherwise
-    def ChatStream(self, user):
+    def ChatStream(self, user, data_stream):
         print(f"started chat stream for {user}")
         # always make sure to release this; note that this needs to intermittently release
         self.users_lock.acquire(blocking=True)
@@ -95,14 +95,16 @@ class Server():
             with self.chat_locks[user]:
                 if self.chats[user]:
                     print("sending message to " + user)
-                    yield self.chats[user].pop(0)
+                    msg = self.chats[user].pop(0)
+                    data_stream.outb += str(msg).encode("utf-8")
             # reacquire lock before checking while condition
             self.users_lock.acquire(blocking=True)
         # release lock before stopping stream
         self.users_lock.release()
 
 SERVER_METHODS = list(filter(lambda x: x[:2] != "__", dir(Server)))
-def run_server_method(method_code, args, server):
+STREAM_CODE = 50 # code with high value to avoid clashes with other method codes
+def run_server_method(method_code, args, server: Server):
     return getattr(server, SERVER_METHODS[method_code])(*args)
 
 def accept_wrapper(sock):
@@ -113,15 +115,20 @@ def accept_wrapper(sock):
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(conn, events, data=data)
 
-def service_connection(key, mask, server):
+def service_connection(key, mask, server: Server):
     sock = key.fileobj
     data = key.data
     if mask & selectors.EVENT_READ:
         recv_data = sock.recv(1024)  # Should be ready to read
         if recv_data:
             method_code, args = eval(recv_data.decode("utf-8"))
-            output = run_server_method(method_code, args, server)
-            data.outb += str(output).encode("utf-8")
+            if method_code != STREAM_CODE:
+                output = run_server_method(method_code, args, server)
+                data.outb += str(output).encode("utf-8")
+            else:
+                # start up the thread and pass the data outbound object, so the thread can write to it
+                t = Thread(target=server.ChatStream, args=(*args, data))
+                t.start()
         else:
             print(f"Closing connection to {data.addr}")
             sel.unregister(sock)
