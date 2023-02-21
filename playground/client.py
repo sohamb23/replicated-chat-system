@@ -1,0 +1,157 @@
+import socket
+import threading
+import sys
+from server import SERVER_METHODS
+
+DEFAULT_SERVER_ADDR = "10.250.28.57"
+PORT = 50051
+
+class Client:
+    def __init__(self, sock, addr):
+        self.username = ''
+        self.addr = addr
+        self.sock = sock
+
+    def run_service(self, method, args):
+        assert method in SERVER_METHODS
+        method_code = SERVER_METHODS.index(method)
+        transmission = str((method_code, args)).encode("utf-8")
+        self.sock.sendall(transmission)
+        data = self.sock.recv(1024)
+        return eval(data.decode("utf-8"))
+
+    # Create an account with the given username.
+    def CreateAccount(self, usr=''):
+        return self.run_service("CreateAccount", (usr if usr != '' else self.username,))
+
+    # Delete the account with the client username.
+    def DeleteAccount(self):
+        return self.run_service("DeleteAccount", (self.username,))
+
+    # List accounts on the server that match the wildcard
+    def ListAccounts(self, wildcard='.*'):
+        return self.run_service("ListAccounts", (wildcard,))
+
+    # Login to the server with the given username.
+    def Login(self, usr):
+        success = self.run_service("Login", (usr,))
+        if success:
+            self.username = usr
+        return success
+
+    # Logout of the server.
+    def Logout(self):
+        success = self.run_service("Logout", (self.username,))
+        if success:
+            self.username = ''
+        return success
+
+    # Send a message to the given recipient.
+    def SendMessage(self, recipient, message):
+        return self.run_service("SendMessage", (self.username, recipient, message))
+
+    # Listen for messages from the server.
+    def ListenForMessages(self):
+        return
+        for msg in self.run_service("ChatStream", (self.username,)):
+            print()
+            print("[" + msg.sender + "]: " + msg.message)
+    
+    # Print the menu for the client.
+    def printMenu(self):
+        print('1. Create Account')
+        print('2. List All Accounts')
+        print('3. List Account by Wildcard')
+        print('4. Delete Account')
+        print('5. Login')
+        print('6. Send Message')
+        print('7. Exit / Logout')
+    
+
+# Run the client.
+def run(addr = DEFAULT_SERVER_ADDR):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((DEFAULT_SERVER_ADDR, PORT))
+        client = Client(s, addr)
+        client.printMenu()
+        user_input = input("Enter option: ")
+        if user_input in ['1', '2', '3', '4', '5', '6', '7']:
+            rpc_call = int(user_input)
+        else:
+            rpc_call = 0
+        
+        while rpc_call != 7:
+            # create account
+            if rpc_call == 1:
+                name = input("Enter username: ")
+                if client.CreateAccount(name):
+                    print("Account created successfully")
+                else:
+                    print("Account creation failed")
+            
+            # list accounts
+            elif rpc_call == 2:
+                for account in client.ListAccounts():
+                    print(account)
+
+            # list accounts by wildcard
+            elif rpc_call == 3:
+                wildcard = input("Enter wildcard: ")
+                for account in client.ListAccounts(wildcard):
+                    print(account)
+            
+            # delete account
+            elif rpc_call == 4:
+                if client.username == '':
+                    print("You must be logged in to delete your account")
+                else:
+                    client.Logout() # logout before deleting account    
+                    if client.DeleteAccount():
+                        print("Account deleted successfully")
+                    else:
+                        print("Account deletion failed")
+
+            # login
+            elif rpc_call == 5:
+                usr = input("Enter username: ")
+                if client.Login(usr):
+                    print("Login successful")
+                    # start a thread to listen for messages
+                    t = threading.Thread(target=client.ListenForMessages)
+                    t.start()
+                else:
+                    print("Login failed. Username might not exist.")
+
+            # send message
+            elif rpc_call == 6:
+                if client.username == '':
+                    print("You must be logged in to send messages")
+                else:
+                    recipient = input("Enter recipient: ")
+                    message = input("Enter message: ")
+                    if client.SendMessage(recipient, message):
+                        print("Message sent successfully")
+                    else:
+                        print("Message failed to send")
+            
+            client.printMenu()
+            user_input = input("Enter option: ")
+            if user_input in ['1', '2', '3', '4', '5', '6', '7']:
+                rpc_call = int(user_input)
+            else:
+                rpc_call = 0
+
+        # Logout if the user is logged in
+        if client.username != '':
+            client.Logout()
+        print('Exiting...')
+        exit()
+
+# run the client
+if __name__ == '__main__':
+    if len(sys.argv) == 1:
+        run()
+    elif len(sys.argv) == 2:
+        run(addr = sys.argv[1])
+    else:
+        print("Invalid number of arguments: there is a single optional argument for the server's IP address")
