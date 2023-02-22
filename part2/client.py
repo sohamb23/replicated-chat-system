@@ -142,7 +142,7 @@ def run(addr = DEFAULT_SERVER_ADDR):
     if client.username != '':
         client.Logout()
     print('Exiting...')
-    exit()
+    sys.exit(0)
 
 # run the client
 if __name__ == '__main__':
