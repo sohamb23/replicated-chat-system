@@ -16,7 +16,7 @@ class Client:
         self.addr = addr
         self.channel = grpc.insecure_channel(addr + ":50051")
         self.stub = chat_pb2_grpc.ChatStub(self.channel)
-        self.stop_listening = False
+        self.stop_listening = False # boolean to tell listener thread when user logs out
 
     # Create an account with the given username.
     def CreateAccount(self, usr=''):

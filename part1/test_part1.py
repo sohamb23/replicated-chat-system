@@ -1,6 +1,5 @@
 import os
 import socket
-#from ..chat_pb2 import *
 # import the client class from the parent directory
 from client import Client, PORT
 import time

@@ -8,6 +8,7 @@ import selectors
 DEFAULT_SERVER_ADDR = "10.250.180.4"
 PORT = 50051
 
+# selector for managing all sockets used by client
 sel = selectors.DefaultSelector()
 
 class Client:
@@ -15,10 +16,15 @@ class Client:
         self.username = ''
         self.server_addr = server_addr
         self.sock = sock
-        self.stop_listening = False
+        self.stop_listening = False # boolean to tell listener thread when user logs out
 
+    # this encodes a method call, sends it to the server, and finally decodes and returns the
+    # the server's response. Takes in a method name and the args to be passed to the method
     def run_service(self, method, args):
         assert method in SERVER_METHODS
+        # SERVER_METHODS is a list of services/methods exposed by the server
+        # grabbing the index of a method from this list gives a unique integer code
+        # for the method in question
         method_code = SERVER_METHODS.index(method)
         transmission = str((method_code, args)).encode("utf-8")
         self.sock.sendall(transmission)
@@ -63,6 +69,7 @@ class Client:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             # connect and initiate stream
             s.connect((self.server_addr, PORT))
+            # STREAM_CODE is a code for the ChatStream method call on the server
             transmission = str((STREAM_CODE, (self.username,))).encode("utf-8")
             s.sendall(transmission)
             # setup selector to listen for read events
@@ -74,6 +81,7 @@ class Client:
             while not self.stop_listening:
                 events = sel.select(timeout=None)
                 for key, mask in events:
+                    # data is none when the event is a new connection
                     if key.data is None:
                         raise Exception("Shouldn't be accepting connections to socket reserved for listening \
                                         to messages")
@@ -170,6 +178,7 @@ def run(server_addr = DEFAULT_SERVER_ADDR):
         # Logout if the user is logged in
         if client.username != '':
             client.Logout()
+        client.stop_listening = True
         print('Exiting...')
         sys.exit(0)
 

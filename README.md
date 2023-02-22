@@ -9,19 +9,15 @@ The user first clones this repository, then installs the required dependencies u
 ### UI:
 After you launch the client, you will be shown a menu with seven options:
 1. Create Account
-2. List all accounts
-3. List account by wildcard
-4. delete account
-5. login
-6. send message
-7. logout + exit
+2. List all Accounts
+3. List Account by Wildcard
+4. Delete Account
+5. Login
+6. Send Message
+7. Logout + Exit
 
 The user then types a number specifying the option they want. After that, they specify the arguments. The client sends a message to the server, the server performs the requested action, and reports back the status of the request back to the client. The user can keep on specifying options as they please. Once the user is done, they can exit by typing 7
 
 ## Running Tests
 
 You can test the client server interaction by navigating to either the `part1` or `part2` subdirectory and running `./launch_test.sh`. The script will launch a test will simulate launching a server and client and report whether it can perform the essential functions.
-
-
-
-
