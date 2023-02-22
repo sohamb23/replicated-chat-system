@@ -139,7 +139,6 @@ def run(server_addr = DEFAULT_SERVER_ADDR):
                 if client.username == '':
                     print("You must be logged in to delete your account")
                 else:
-                    client.Logout() # logout before deleting account    
                     if client.DeleteAccount():
                         print("Account deleted successfully")
                     else:
@@ -176,8 +175,9 @@ def run(server_addr = DEFAULT_SERVER_ADDR):
                 rpc_call = 0
 
         # Logout if the user is logged in
-        if client.username != '':
+        if client.username != '':     
             client.Logout()
+        # stop listening for messages
         client.stop_listening = True
         print('Exiting...')
         sys.exit(0)
