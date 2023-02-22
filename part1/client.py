@@ -5,16 +5,17 @@ from server import SERVER_METHODS, SingleMessage, STREAM_CODE
 import types
 import selectors
 
-DEFAULT_SERVER_ADDR = "10.250.28.57"
+DEFAULT_SERVER_ADDR = "10.250.180.4"
 PORT = 50051
 
 sel = selectors.DefaultSelector()
 
 class Client:
-    def __init__(self, sock, server_addr):
+    def __init__(self, sock, server_addr=DEFAULT_SERVER_ADDR):
         self.username = ''
         self.server_addr = server_addr
         self.sock = sock
+        self.stop_listening = False
 
     def run_service(self, method, args):
         assert method in SERVER_METHODS
@@ -26,11 +27,14 @@ class Client:
 
     # Create an account with the given username.
     def CreateAccount(self, usr=''):
-        return self.run_service("CreateAccount", (usr if usr != '' else self.username,))
+        return self.run_service("CreateAccount", (usr,))
 
     # Delete the account with the client username.
     def DeleteAccount(self):
-        return self.run_service("DeleteAccount", (self.username,))
+        success = self.run_service("DeleteAccount", (self.username,))
+        if success:
+            self.username = ''
+        return success
 
     # List accounts on the server that match the wildcard
     def ListAccounts(self, wildcard='.*'):
@@ -67,7 +71,7 @@ class Client:
             sel.register(s, events, data=data)
 
             # process events and print messages received
-            while True:
+            while not self.stop_listening:
                 events = sel.select(timeout=None)
                 for key, mask in events:
                     if key.data is None:

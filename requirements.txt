@@ -2,3 +2,5 @@ grpcio
 grpcio-tools
 pytest==7.2.0
 pytest-cov==2.12.1
+.coverage
+log.txt

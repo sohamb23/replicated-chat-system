@@ -40,7 +40,8 @@ class Server():
                 self.users.discard(user)
                 self.online.discard(user)
                 with self.chat_locks[user]:
-                    del self.chats[user] # delete undelivered chats if you are deleting the account
+                    if user in self.chats:
+                        del self.chats[user] # delete undelivered chats if you are deleting the account
                 del self.chat_locks[user]
         return success
     
@@ -126,7 +127,7 @@ def service_connection(key, mask, server: Server):
                 output = run_server_method(method_code, args, server)
                 data.outb += str(output).encode("utf-8")
             else:
-                # start up the thread and pass the data outbound object, so the thread can write to it
+                # start up the thread and pass the data object, so the thread can write to it
                 t = Thread(target=server.ChatStream, args=(*args, data))
                 t.start()
         else:

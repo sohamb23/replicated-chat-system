@@ -16,15 +16,18 @@ class Client:
         self.addr = addr
         self.channel = grpc.insecure_channel(addr + ":50051")
         self.stub = chat_pb2_grpc.ChatStub(self.channel)
+        self.stop_listening = False
 
     # Create an account with the given username.
     def CreateAccount(self, usr=''):
-        response = self.stub.CreateAccount(chat_pb2.CreateAccountRequest(accountName= usr if usr != '' else self.username))
+        response = self.stub.CreateAccount(chat_pb2.CreateAccountRequest(accountName=usr))
         return response.success
 
     # Delete the account with the client username.
     def DeleteAccount(self):
         response = self.stub.DeleteAccount(chat_pb2.DeleteAccountRequest(accountName=self.username))
+        if response.success:
+            self.username = ''
         return response.success
 
     # List accounts on the server that match the wildcard
@@ -48,15 +51,21 @@ class Client:
 
     # Send a message to the given recipient.
     def SendMessage(self, recipient, message):
-        response = self.stub.SendMessage(chat_pb2.MessageSendRequest(sender=self.username, recipient=recipient, message=message))
+        request = chat_pb2.MessageSendRequest(sender=self.username, recipient=recipient, message=message)
+        response = self.stub.SendMessage(request)
         return response.success
 
     # Listen for messages from the server.
     def ListenForMessages(self):
-        for msg in self.stub.ChatStream(chat_pb2.ChatRequest(accountName=self.username)):
-            print()
-            print("[" + msg.sender + "]: " + msg.message)
-    
+        stream = self.stub.ChatStream(chat_pb2.ChatRequest(accountName=self.username))
+        while not self.stop_listening:
+            try: 
+                msg = next(stream)
+                print()
+                print("[" + msg.sender + "]: " + msg.message)
+            except:
+                pass
+
     # Print the menu for the client.
     def printMenu(self):
         print('1. Create Account')
@@ -101,7 +110,6 @@ def run(addr = DEFAULT_SERVER_ADDR):
             if client.username == '':
                 print("You must be logged in to delete your account")
             else:
-                client.Logout() # logout before deleting account    
                 if client.DeleteAccount():
                     print("Account deleted successfully")
                 else:
@@ -141,6 +149,7 @@ def run(addr = DEFAULT_SERVER_ADDR):
     # Logout if the user is logged in
     if client.username != '':
         client.Logout()
+    client.stop_listening = True
     print('Exiting...')
     sys.exit(0)
 

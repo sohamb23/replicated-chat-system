@@ -20,7 +20,7 @@ The user then types a number specifying the option they want. After that, they s
 
 ## Running Tests
 
-You can test the client server interaction by navigating to either the `part1` or `part2` subdirectory and running `pytest test_part1.py` or `pytest test_part2.py` depending on which part you're testing. The test will simulate launching a server and client and report whether it can perform the essential functions.
+You can test the client server interaction by navigating to either the `part1` or `part2` subdirectory and running `./launch_test.sh`. The script will launch a test will simulate launching a server and client and report whether it can perform the essential functions.
 
 
 

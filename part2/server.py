@@ -39,7 +39,8 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                 self.users.discard(user)
                 self.online.discard(user)
                 with self.chat_locks[user]:
-                    del self.chats[user] # delete undelivered chats if you are deleting the account
+                    if user in self.chats:
+                        del self.chats[user] # delete undelivered chats if you are deleting the account
                 del self.chat_locks[user]
         return chat_pb2.DeleteAccountResponse(success=success)
     

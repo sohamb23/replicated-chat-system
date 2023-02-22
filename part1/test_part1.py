@@ -2,7 +2,7 @@ import os
 import socket
 #from ..chat_pb2 import *
 # import the client class from the parent directory
-from client import Client
+from client import Client, PORT
 import time
 import sys
 import threading
@@ -12,12 +12,16 @@ from io import StringIO
 # launch the server python script
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.system('python3 server.py &')                     # launch the server
-time.sleep(3)                                        # wait for server to start
+time.sleep(1)                                        # wait for server to start
 IP_ADDR = socket.gethostbyname(socket.gethostname()) # get ip address of server
 
 class TestClient:
         
-    client = Client(IP_ADDR)                         # create a client object
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((IP_ADDR, PORT))
+    client = Client(s, IP_ADDR)                         # create a client object
+    
+    t1 = ''
     def test_create_account(self):
         response = self.client.CreateAccount('test1')
         assert response == True
@@ -41,11 +45,13 @@ class TestClient:
         assert sorted(response) == ['test1', 'test2']
     
     def test_multiple_creates(self):
-        client2 = Client(IP_ADDR)                   # create a new client object
-        response = client2.CreateAccount('another')
-        assert response == True
-        response = client2.ListAccounts()
-        assert sorted(response) == ['another', 'test1', 'test2'] # check that all clients can see each other's accounts
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as temp_s:
+            temp_s.connect((IP_ADDR, PORT))
+            client2 = Client(temp_s, IP_ADDR)                   # create a new client object
+            response = client2.CreateAccount('another')
+            assert response == True
+            response = client2.ListAccounts()
+            assert sorted(response) == ['another', 'test1', 'test2'] # check that all clients can see each other's accounts
     
     
     def test_login(self):
@@ -85,18 +91,19 @@ class TestClient:
 
 
     def test_receive_message(self):
-        client2 = Client(IP_ADDR)                             # create a new client object
-        client2.Login('test2')
-        # redirect stdout to a variable
-        old_stdout = sys.stdout
-        sys.stdout = mystdout = StringIO()
-        t1 = threading.Thread(target=client2.ListenForMessages)
-        t1.start()
-        time.sleep(1)
-        sys.stdout = old_stdout
-        output = mystdout.getvalue()
-        assert output == '\n[test1]: hello\n'
-        self.client.stop_listening = True
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as temp_s:
+            temp_s.connect((IP_ADDR, PORT))
+            client2 = Client(temp_s, IP_ADDR)                             # create a new client object
+            client2.Login('test2')
+            # redirect stdout to a variable
+            old_stdout = sys.stdout
+            sys.stdout = mystdout = StringIO()
+            t1 = threading.Thread(target=client2.ListenForMessages)
+            t1.start()
+            time.sleep(1)
+            sys.stdout = old_stdout
+            output = mystdout.getvalue()
+            assert output == '\n[test1]: hello\n'
     
     def test_send_message_to_nonexistent_account(self):
         self.client.CreateAccount('test1')
@@ -104,5 +111,4 @@ class TestClient:
         response = self.client.SendMessage('nonexistent', 'hello')
         assert response == False
         self.client.Logout()
-        
-# exit pytest
+        self.s.close()
