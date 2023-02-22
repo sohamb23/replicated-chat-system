@@ -8,11 +8,12 @@ import time
 # set os to current directory
 # launch the server python script
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-os.system('python3 server.py &')
+os.system('python3 server.py &') # launch the server
 time.sleep(1) # wait for server to start
+IP_ADDR = socket.gethostbyname(socket.gethostname()) # get ip address of server
 
 class TestClient:
-    client = Client()
+    client = Client(IP_ADDR)
         
     def test_create_account(self):
         response = self.client.CreateAccount('test1')
