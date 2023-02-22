@@ -35,11 +35,17 @@ All in all, the two implementations are quite similar with a small (in terms of 
 
 ### Time Comparison
 
-For the time-comparison, we simulated a sample session between client and server and montiored how fast it would take to complete the requests. Here's a graph comparing the two run-times over 10 trials:
+For the time-comparison, we simulated a sample session between the client and the server and monitored how fast it would take to complete the requests. Here's a graph comparing the two run-times over 10 trials:
 ![image](runtime.png "Comparison of runtimes")
+We see that the socket implementation consistently has faster run-times than the gRPC version. While this was not expected by us, we were not completely surprised due to the realization that a gRPC message goes through many processes before being sent from the client to the server.
 
+Another interesting note is that both implementations experience a significant drop in time needed to complete the testing sequence after the first run. In fact, our non gRPC implementation takes 40% as much time on the second run before experiencing a second dropoff (this time a full order of magnitude from the second run) and remaining consistent on the remaining runs. On the other hand, the gRPC implementation drops about 40x from the first run to the second and remains consistent thereafter.
 
 ### Buffer Size
+For the size comparison, we measured the size of either the protocol buffer (part 2) or tuple (part 1) being transmitted from the client. Shown below is a stacked bar graph comparing their sizes
+![image](size.png "Comparison of sizes")
+
+We see that gRPC consistently has smaller sizes for the messages it is sending, which indicates that it has a superior compression mechanism than our makeshift tuple encoding/decoding scheme.
 
 
 ## Testing

@@ -7,13 +7,20 @@ sender = user
 recipient = "Alonzo Church"
 message = "Hi, my name is Alan."
 trials = [
-    ("CreateAccount", chat_pb2.CreateAccountRequest(accountName=user)),
-    ("DeleteAccount", chat_pb2.DeleteAccountRequest(accountName=user)),
-    ("ListAccounts", chat_pb2.ListAccountsRequest(accountWildcard = wildcard)),
-    ("Login", chat_pb2.LoginRequest(accountName=user)),
-    ("Logout", chat_pb2.LogoutRequest(accountName=user)),
-    ("SendMessage", chat_pb2.MessageSendRequest(sender=sender, recipient=recipient, message=message)),
-    ("ChatStream", chat_pb2.ChatRequest(accountName=user))
+    ("CreateAccount", 
+     chat_pb2.CreateAccountRequest.SerializeToString(chat_pb2.CreateAccountRequest(accountName=user))),
+    ("DeleteAccount", 
+     chat_pb2.DeleteAccountRequest.SerializeToString(chat_pb2.DeleteAccountRequest(accountName=user))),
+    ("ListAccounts", 
+     chat_pb2.ListAccountsRequest.SerializeToString(chat_pb2.ListAccountsRequest(accountWildcard=wildcard))),
+    ("Login", 
+     chat_pb2.LoginRequest.SerializeToString(chat_pb2.LoginRequest(accountName=user))),
+    ("Logout", 
+     chat_pb2.LogoutRequest.SerializeToString(chat_pb2.LogoutRequest(accountName=user))),
+    ("SendMessage", 
+     chat_pb2.MessageSendRequest.SerializeToString(chat_pb2.MessageSendRequest(sender=sender, recipient=recipient, message=message))),
+    ("ChatStream", 
+     chat_pb2.ChatRequest.SerializeToString(chat_pb2.ChatRequest(accountName=user)))
 ]
 
 for method, request in trials:

@@ -1,3 +1,6 @@
 __pycache__
 .pytest_cache
 .ipynb_checkpoints
+time_part1.txt
+time_part2.txt
+.coverage
