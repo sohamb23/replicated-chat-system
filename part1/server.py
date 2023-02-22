@@ -5,7 +5,9 @@ import re
 from threading import Lock, Thread
 from collections import defaultdict, namedtuple
 
+# selector for registering and managing connected sockets
 sel = selectors.DefaultSelector()
+# type for messages
 SingleMessage = namedtuple("SingleMessage", ["sender", "message"])
 
 IP_ADDR = socket.gethostbyname(socket.gethostname()) # get ip address of server
@@ -103,11 +105,14 @@ class Server():
         # release lock before stopping stream
         self.users_lock.release()
 
+# methods that will be exposed to the client; our analog to services
 SERVER_METHODS = list(filter(lambda x: x[:2] != "__", dir(Server)))
-STREAM_CODE = 50 # code with high value to avoid clashes with other method codes
+STREAM_CODE = 50 # designated integer code with a high value to avoid clashes with other method codes
+# run a method on the server given a code for the method and a tuple of the args to pass in
 def run_server_method(method_code, args, server: Server):
     return getattr(server, SERVER_METHODS[method_code])(*args)
 
+# a wrapper function for accepting sockets with some additional configuration
 def accept_wrapper(sock):
     conn, addr = sock.accept()
     print(f"Accepted connection from {addr}")
@@ -116,6 +121,8 @@ def accept_wrapper(sock):
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
     sel.register(conn, events, data=data)
 
+# service a socket that is connected: handle inbound and outbound data
+# while running any necessary chat server methods
 def service_connection(key, mask, server: Server):
     sock = key.fileobj
     data = key.data
