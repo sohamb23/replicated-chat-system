@@ -24,8 +24,13 @@ service Chat {
 
     // Deletes an account
     rpc DeleteAccount (DeleteAccountRequest) returns (DeleteAccountResponse) {}
-}
 
+    // Gets server id
+    rpc GetServerId (Empty) returns (GetServerIdResponse) {}
+
+    // Updates primary server
+    rpc UpdatePrimaryServer (UpdatePrimaryServerRequest) returns (UpdatePrimaryServerResponse) {}
+}
 
 
 // Request to send a message to a user
@@ -97,5 +102,23 @@ message DeleteAccountRequest {
 
 // Response for a delete account request
 message DeleteAccountResponse {
+    bool success = 1;
+}
+
+// Empty message
+message Empty {}
+
+// Response for a get server id request
+message GetServerIdResponse {
+    string serverId = 1;
+}
+
+// Request to update primary server
+message UpdatePrimaryServerRequest {
+    string serverAddress = 1;
+}
+
+// Response for an update primary server request
+message UpdatePrimaryServerResponse {
     bool success = 1;
 }
