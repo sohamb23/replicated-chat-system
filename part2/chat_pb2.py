@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nchat.proto\x12\x05greet\"H\n\x12MessageSendRequest\x12\x11\n\trecipient\x18\x01 \x01(\t\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"&\n\x13MessageSendResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\"\n\x0b\x43hatRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"0\n\rSingleMessage\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"+\n\x14\x43reateAccountRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"(\n\x15\x43reateAccountResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"#\n\x0cLoginRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\" \n\rLoginResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"$\n\rLogoutRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"!\n\x0eLogoutResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\".\n\x13ListAccountsRequest\x12\x17\n\x0f\x61\x63\x63ountWildcard\x18\x01 \x01(\t\"(\n\x14ListAccountsResponse\x12\x10\n\x08\x61\x63\x63ounts\x18\x01 \x03(\t\"+\n\x14\x44\x65leteAccountRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"(\n\x15\x44\x65leteAccountResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x32\xe0\x03\n\x04\x43hat\x12\x46\n\x0bSendMessage\x12\x19.greet.MessageSendRequest\x1a\x1a.greet.MessageSendResponse\"\x00\x12:\n\nChatStream\x12\x12.greet.ChatRequest\x1a\x14.greet.SingleMessage\"\x00\x30\x01\x12L\n\rCreateAccount\x12\x1b.greet.CreateAccountRequest\x1a\x1c.greet.CreateAccountResponse\"\x00\x12\x34\n\x05Login\x12\x13.greet.LoginRequest\x1a\x14.greet.LoginResponse\"\x00\x12\x37\n\x06Logout\x12\x14.greet.LogoutRequest\x1a\x15.greet.LogoutResponse\"\x00\x12I\n\x0cListAccounts\x12\x1a.greet.ListAccountsRequest\x1a\x1b.greet.ListAccountsResponse\"\x00\x12L\n\rDeleteAccount\x12\x1b.greet.DeleteAccountRequest\x1a\x1c.greet.DeleteAccountResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nchat.proto\x12\x05greet\"H\n\x12MessageSendRequest\x12\x11\n\trecipient\x18\x01 \x01(\t\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"&\n\x13MessageSendResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\"\n\x0b\x43hatRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"0\n\rSingleMessage\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"+\n\x14\x43reateAccountRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"(\n\x15\x43reateAccountResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"#\n\x0cLoginRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\" \n\rLoginResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"$\n\rLogoutRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"!\n\x0eLogoutResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\".\n\x13ListAccountsRequest\x12\x17\n\x0f\x61\x63\x63ountWildcard\x18\x01 \x01(\t\"(\n\x14ListAccountsResponse\x12\x10\n\x08\x61\x63\x63ounts\x18\x01 \x03(\t\"+\n\x14\x44\x65leteAccountRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"(\n\x15\x44\x65leteAccountResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x07\n\x05\x45mpty\"\'\n\x13GetServerIdResponse\x12\x10\n\x08serverId\x18\x01 \x01(\t\"5\n\x1aUpdatePrimaryServerRequest\x12\x17\n\x0fprimaryServerId\x18\x01 \x01(\x05\".\n\x1bUpdatePrimaryServerResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x32\xfb\x04\n\x04\x43hat\x12\x46\n\x0bSendMessage\x12\x19.greet.MessageSendRequest\x1a\x1a.greet.MessageSendResponse\"\x00\x12:\n\nChatStream\x12\x12.greet.ChatRequest\x1a\x14.greet.SingleMessage\"\x00\x30\x01\x12L\n\rCreateAccount\x12\x1b.greet.CreateAccountRequest\x1a\x1c.greet.CreateAccountResponse\"\x00\x12\x34\n\x05Login\x12\x13.greet.LoginRequest\x1a\x14.greet.LoginResponse\"\x00\x12\x37\n\x06Logout\x12\x14.greet.LogoutRequest\x1a\x15.greet.LogoutResponse\"\x00\x12I\n\x0cListAccounts\x12\x1a.greet.ListAccountsRequest\x1a\x1b.greet.ListAccountsResponse\"\x00\x12L\n\rDeleteAccount\x12\x1b.greet.DeleteAccountRequest\x1a\x1c.greet.DeleteAccountResponse\"\x00\x12\x39\n\x0bGetServerId\x12\x0c.greet.Empty\x1a\x1a.greet.GetServerIdResponse\"\x00\x12^\n\x13UpdatePrimaryServer\x12!.greet.UpdatePrimaryServerRequest\x1a\".greet.UpdatePrimaryServerResponse\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'chat_pb2', globals())
@@ -48,6 +48,14 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _DELETEACCOUNTREQUEST._serialized_end=585
   _DELETEACCOUNTRESPONSE._serialized_start=587
   _DELETEACCOUNTRESPONSE._serialized_end=627
-  _CHAT._serialized_start=630
-  _CHAT._serialized_end=1110
+  _EMPTY._serialized_start=629
+  _EMPTY._serialized_end=636
+  _GETSERVERIDRESPONSE._serialized_start=638
+  _GETSERVERIDRESPONSE._serialized_end=677
+  _UPDATEPRIMARYSERVERREQUEST._serialized_start=679
+  _UPDATEPRIMARYSERVERREQUEST._serialized_end=732
+  _UPDATEPRIMARYSERVERRESPONSE._serialized_start=734
+  _UPDATEPRIMARYSERVERRESPONSE._serialized_end=780
+  _CHAT._serialized_start=783
+  _CHAT._serialized_end=1418
 # @@protoc_insertion_point(module_scope)

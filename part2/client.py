@@ -5,16 +5,17 @@ import threading
 import sys
 
 DEFAULT_SERVER_ADDR = '10.250.180.4'
+DEFAULT_PORT = "50051"
 # c's address: '10.228.32.66'
 
 # Client class. The class we will use to interact with the server.
 class Client:
 
     # initialize the client with the server's address and create a stub.
-    def __init__(self, addr=DEFAULT_SERVER_ADDR):
+    def __init__(self, addr=DEFAULT_SERVER_ADDR, port = DEFAULT_PORT):
         self.username = ''
         self.addr = addr
-        self.channel = grpc.insecure_channel(addr + ":50051")
+        self.channel = grpc.insecure_channel(addr + ":" + port)
         self.stub = chat_pb2_grpc.ChatStub(self.channel)
         self.stop_listening = False # boolean to tell listener thread when user logs out
 
@@ -159,5 +160,7 @@ if __name__ == '__main__':
         run()
     elif len(sys.argv) == 2:
         run(addr = sys.argv[1])
+    elif len(sys.argv) == 3:
+        run(addr = sys.argv[1], port = sys.argv[2])
     else:
         print("Invalid number of arguments: there is a single optional argument for the server's IP address")

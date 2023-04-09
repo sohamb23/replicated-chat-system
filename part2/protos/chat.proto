@@ -115,7 +115,7 @@ message GetServerIdResponse {
 
 // Request to update primary server
 message UpdatePrimaryServerRequest {
-    string serverAddress = 1;
+    int32 primaryServerId = 1;
 }
 
 // Response for an update primary server request

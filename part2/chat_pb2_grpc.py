@@ -50,6 +50,16 @@ class ChatStub(object):
                 request_serializer=chat__pb2.DeleteAccountRequest.SerializeToString,
                 response_deserializer=chat__pb2.DeleteAccountResponse.FromString,
                 )
+        self.GetServerId = channel.unary_unary(
+                '/greet.Chat/GetServerId',
+                request_serializer=chat__pb2.Empty.SerializeToString,
+                response_deserializer=chat__pb2.GetServerIdResponse.FromString,
+                )
+        self.UpdatePrimaryServer = channel.unary_unary(
+                '/greet.Chat/UpdatePrimaryServer',
+                request_serializer=chat__pb2.UpdatePrimaryServerRequest.SerializeToString,
+                response_deserializer=chat__pb2.UpdatePrimaryServerResponse.FromString,
+                )
 
 
 class ChatServicer(object):
@@ -105,6 +115,20 @@ class ChatServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetServerId(self, request, context):
+        """Gets server id
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdatePrimaryServer(self, request, context):
+        """Updates primary server
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ChatServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -142,6 +166,16 @@ def add_ChatServicer_to_server(servicer, server):
                     servicer.DeleteAccount,
                     request_deserializer=chat__pb2.DeleteAccountRequest.FromString,
                     response_serializer=chat__pb2.DeleteAccountResponse.SerializeToString,
+            ),
+            'GetServerId': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetServerId,
+                    request_deserializer=chat__pb2.Empty.FromString,
+                    response_serializer=chat__pb2.GetServerIdResponse.SerializeToString,
+            ),
+            'UpdatePrimaryServer': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdatePrimaryServer,
+                    request_deserializer=chat__pb2.UpdatePrimaryServerRequest.FromString,
+                    response_serializer=chat__pb2.UpdatePrimaryServerResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -270,5 +304,39 @@ class Chat(object):
         return grpc.experimental.unary_unary(request, target, '/greet.Chat/DeleteAccount',
             chat__pb2.DeleteAccountRequest.SerializeToString,
             chat__pb2.DeleteAccountResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetServerId(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/greet.Chat/GetServerId',
+            chat__pb2.Empty.SerializeToString,
+            chat__pb2.GetServerIdResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpdatePrimaryServer(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/greet.Chat/UpdatePrimaryServer',
+            chat__pb2.UpdatePrimaryServerRequest.SerializeToString,
+            chat__pb2.UpdatePrimaryServerResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

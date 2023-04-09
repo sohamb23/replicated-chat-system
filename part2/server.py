@@ -2,22 +2,35 @@ import grpc
 import chat_pb2
 import chat_pb2_grpc
 import re
+import sys
 from concurrent import futures
 from threading import Lock
 import socket
 from collections import defaultdict
+import time
 
 # Server class that implements the ChatServicer interface defined by proto file.
 # This class is responsible for handling the RPC calls from the client.
+
+# server addrs for my machine
+SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053"}
+
+## server addrs for multiple machines
+SERVER_ADDRS_MULTIPLE = #TODO: add server addrs for multiple machines
+
 class ChatServicer(chat_pb2_grpc.ChatServicer):
 
     # initialize the server with empty users, chats, and online lists
-    def __init__(self):
+    def __init__(self, id):
         self.users_lock = Lock() # lock for both self.users and self.online
         self.users = set()
         self.chat_locks = defaultdict(lambda: Lock()) # locks for each k, v pair in self.chats
         self.chats = defaultdict(lambda: [])
         self.online = set()
+        self.server_addrs = SERVER_ADDRS
+        self.primary_id = None
+        self.id = id
+        
 
     # report failure if account already exists and add user otherwise
     def CreateAccount(self, request, context):
@@ -106,20 +119,53 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
             self.users_lock.acquire(blocking=True)
         # release lock before stopping stream
         self.users_lock.release()
+    
+    def GetServerId(self, request, context):
+        return chat_pb2.GetServerIdResponse(id=self.id)
+    
+    # constantly run this function make sure that the primary server is 
+    # always the active server with the lowest id
+    def ElectLeader(self):
+        while True:
+            min_id = self.id
+            for id in self.server_addrs:
+                if id != self.id:
+                    # try to establish connection with server, handle if it fails
+                    try:
+                        with grpc.insecure_channel(self.server_addrs[id]) as channel:
+                            stub = chat_pb2_grpc.ChatStub(channel)
+                            response = stub.GetServerId(chat_pb2.GetServerIdRequest())
+                            if response.id < min_id:
+                                min_id = response.id
+                    except:
+                        print("failed to connect to server " + self.server_addrs[id])
+            
+            if self.primary_id  != min_id:
+                self.primary_id = min_id
+                print("NEW PRIMARY SERVER: " + self.server_addrs[self.primary_id])
+            time.sleep(0.5)
+        
+
 
 # start the server
-def serve():
+def serve(port, id):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    chat_pb2_grpc.add_ChatServicer_to_server(ChatServicer(), server) 
+    chat_pb2_grpc.add_ChatServicer_to_server(ChatServicer(id), server) 
 
     ip_address = socket.gethostbyname(socket.gethostname()) # get ip address of server
-    server.add_insecure_port(ip_address + ':50051')         # add port to ip address
+    server.add_insecure_port(ip_address + ':' + port)         # add port to ip address
 
-    print("starting server at " + ip_address)
+    print("starting server at " + ip_address + ':' + port)
     server.start()
     server.wait_for_termination()
 
 # run the server when this script is executed
 if __name__ == '__main__':
-    serve()
+    if len(sys.argv) != 3:
+        print("usage: python3 server.py <port> <id>")
+        exit()
+    else:
+        port = sys.argv[1]
+        id = sys.argv[2]
+        serve(port, id)
     
