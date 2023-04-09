@@ -15,6 +15,13 @@ import time
 # server addrs for my machine
 SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053"}
 
+# multiple server addrs:
+# SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053", 4: "10.250.147.180:50051", 5: "10.250.147.180:50052", 6: "10.250.147.180:50053"}
+
+
+
+# 10.250.147.180:50051
+
 ## server addrs for multiple machines
 #TODO: SERVER_ADDRS_MULTIPLE: add server addrs for multiple machines
 
@@ -126,11 +133,16 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
     def GetServerId(self, request, context):
         return chat_pb2.GetServerIdResponse(serverId=self.id)
     
+    def UpdatePrimaryServer(self, request, context):
+        self.primary_id = int(request.primaryServerId)
+        print(str(self.id) + ": NEW PRIMARY SERVER: " + self.server_addrs[self.primary_id])
+        return chat_pb2.UpdatePrimaryServerResponse(success=True)
+    
     # constantly run this function make sure that the primary server is 
     # always the active server with the lowest id
     def ElectLeader(self):
         while True:
-            min_id = self.id if self.primary_id is None else self.primary_id
+            min_id = self.id
             for id in self.server_addrs:
                 if id != self.id:
                     # try to establish connection with server, handle if it fails
@@ -145,9 +157,16 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
             
             if self.primary_id  != min_id:
                 self.primary_id = min_id
-                print("NEW PRIMARY SERVER: " + self.server_addrs[self.primary_id])
-            else:
-                print(str(self.id) + ": primary server is still " + self.server_addrs[self.primary_id])
+                print(str(self.id) + ": NEW PRIMARY SERVER: " + self.server_addrs[self.primary_id])
+                # Update the primary server for all of the other servers
+                for id in self.server_addrs:
+                    if id != self.id:
+                        try:
+                            with grpc.insecure_channel(self.server_addrs[id]) as channel:
+                                stub = chat_pb2_grpc.ChatStub(channel)
+                                stub.UpdatePrimaryServer(chat_pb2.UpdatePrimaryServerRequest(primaryServerId=self.primary_id))
+                        except:
+                            print(str(self.id) + ": failed to connect to server " + self.server_addrs[id])
             time.sleep(1)
         
 
