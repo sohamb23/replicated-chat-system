@@ -4,7 +4,7 @@ import chat_pb2_grpc
 import re
 import sys
 from concurrent import futures
-from threading import Lock
+from threading import Lock, Thread
 import socket
 from collections import defaultdict
 import time
@@ -16,7 +16,7 @@ import time
 SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053"}
 
 ## server addrs for multiple machines
-SERVER_ADDRS_MULTIPLE = #TODO: add server addrs for multiple machines
+#TODO: SERVER_ADDRS_MULTIPLE: add server addrs for multiple machines
 
 class ChatServicer(chat_pb2_grpc.ChatServicer):
 
@@ -29,7 +29,10 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         self.online = set()
         self.server_addrs = SERVER_ADDRS
         self.primary_id = None
-        self.id = id
+        self.id = int(id)
+        time.sleep(5)
+        self.election_thread = Thread(target=self.ElectLeader)
+        self.election_thread.start()
         
 
     # report failure if account already exists and add user otherwise
@@ -121,29 +124,31 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         self.users_lock.release()
     
     def GetServerId(self, request, context):
-        return chat_pb2.GetServerIdResponse(id=self.id)
+        return chat_pb2.GetServerIdResponse(serverId=self.id)
     
     # constantly run this function make sure that the primary server is 
     # always the active server with the lowest id
     def ElectLeader(self):
         while True:
-            min_id = self.id
+            min_id = self.id if self.primary_id is None else self.primary_id
             for id in self.server_addrs:
                 if id != self.id:
                     # try to establish connection with server, handle if it fails
                     try:
                         with grpc.insecure_channel(self.server_addrs[id]) as channel:
                             stub = chat_pb2_grpc.ChatStub(channel)
-                            response = stub.GetServerId(chat_pb2.GetServerIdRequest())
-                            if response.id < min_id:
-                                min_id = response.id
+                            response = stub.GetServerId(chat_pb2.Empty())
+                            if int(response.serverId) < min_id:
+                                min_id = int(response.serverId)
                     except:
-                        print("failed to connect to server " + self.server_addrs[id])
+                        print(str(self.id) + ": failed to connect to server " + self.server_addrs[id])
             
             if self.primary_id  != min_id:
                 self.primary_id = min_id
                 print("NEW PRIMARY SERVER: " + self.server_addrs[self.primary_id])
-            time.sleep(0.5)
+            else:
+                print(str(self.id) + ": primary server is still " + self.server_addrs[self.primary_id])
+            time.sleep(1)
         
 
 

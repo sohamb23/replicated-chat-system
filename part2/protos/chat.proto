@@ -110,7 +110,7 @@ message Empty {}
 
 // Response for a get server id request
 message GetServerIdResponse {
-    string serverId = 1;
+    int32 serverId = 1;
 }
 
 // Request to update primary server
