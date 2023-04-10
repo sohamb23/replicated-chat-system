@@ -14,11 +14,11 @@ import time
 # Server class that implements the ChatServicer interface defined by proto file.
 # This class is responsible for handling the RPC calls from the client.
 
-# server addrs for my machine
-# SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053"}
+# For demo with one machine: addrs for my machine
+SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053"}
 
-# multiple server addrs:
-SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053", 4: "10.250.147.180:50051", 5: "10.250.147.180:50052", 6: "10.250.147.180:50053"}
+# For demo with multiple machines: server addrs:
+# SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053", 4: "10.250.147.180:50051", 5: "10.250.147.180:50052", 6: "10.250.147.180:50053"}
 
 FILE_PATH = "ACTION_LOG.csv"
 
@@ -73,6 +73,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
     def isPrimary(self):
         return self.id == self.primary_id
     
+    # get the server id of the primary server
     def GetPrimaryServerId(self, request, context):
         return chat_pb2.GetServerIdResponse(serverId=self.primary_id)
     
@@ -87,7 +88,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                     print(str(self.id) + ": adding user: " + user)
                     self.users.add(user)
                 success = user in self.users and prev_success
-                ## forward create account to non primary servers
+                ## forward create account to non primary servers (replication), and log it into the csv for persistence
                 if self.isPrimary() and success and self.finished_setup:
                     with open(FILE_PATH, "a+") as f:
                         writer = csv.writer(f)
@@ -120,7 +121,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                         if user in self.chats:
                             del self.chats[user] # delete undelivered chats if you are deleting the account
                     del self.chat_locks[user]
-                ## forward delete account to non primary servers
+                ## forward delete account to non primary servers, and log it into the csv for persistence
                 if self.isPrimary() and success and self.finished_setup:
                     with open(FILE_PATH, "a+") as f:
                         writer = csv.writer(f)
@@ -157,7 +158,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
             with self.users_lock:
                 self.online.add(user)
                 success = user in self.users
-                ## forward login to non primary servers
+                ## forward login to non primary servers, and log it into the csv for persistence
                 if self.isPrimary() and success and self.finished_setup:
                     with open(FILE_PATH, "a+") as f:
                         writer = csv.writer(f)
@@ -191,7 +192,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
             with self.users_lock:
                 success = user in self.online
                 self.online.discard(user)
-                ## forward logout to non primary servers
+                ## forward logout to non primary servers and log it into the csv for persistence
                 if self.isPrimary() and success and self.finished_setup:
                     with open(FILE_PATH, "a+") as f:
                         writer = csv.writer(f)
@@ -223,7 +224,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                     message = chat_pb2.SingleMessage(sender=sender, message=message)
                     with self.chat_locks[recipient]:
                         self.chats[recipient].insert(0, message)
-                ## forward send message to non primary servers
+                ## forward send message to non primary servers, and log the message into the csv for persistence
                 if self.isPrimary() and success and self.finished_setup:
                     with open(FILE_PATH, "a+") as f:
                         writer = csv.writer(f)
@@ -266,6 +267,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                                         stub.UpdateChatLength(chat_pb2.UpdateChatLengthRequest(accountName=user, chatLength=self.chat_lens[user]))
                                 except:
                                     print("secondary server " + str(server_id) + " is down")
+                        # log the chat length update into the csv for persistence
                         if self.finished_setup:
                             with open(FILE_PATH, "a+") as f:
                                 writer = csv.writer(f)
@@ -300,7 +302,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         print(str(self.id) + ": NEW PRIMARY SERVER: " + self.server_addrs[self.primary_id])
         return chat_pb2.UpdatePrimaryServerResponse(success=True)
     
-    # constantly run this function make sure that the primary server is 
+    # constantly run this functio in another thread make sure that the primary server is 
     # always the active server with the lowest id
     def ElectLeader(self):
         while True:
@@ -330,7 +332,6 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                                     stub = chat_pb2_grpc.ChatStub(channel)
                                     stub.UpdatePrimaryServer(chat_pb2.UpdatePrimaryServerRequest(primaryServerId=self.primary_id))
                             except:
-                                #print(str(self.id) + ": failed to connect to server " + self.server_addrs[id])
                                 pass
             time.sleep(1)
         

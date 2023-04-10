@@ -5,6 +5,8 @@ import threading
 import sys
 import time
 
+
+# Dictionary mapping ids to server addresses
 SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053", 4: "10.250.147.180:50051", 5: "10.250.147.180:50052", 6: "10.250.147.180:50053"}
 
 
@@ -25,6 +27,7 @@ class Client:
         self.connection_thread = threading.Thread(target=self.connectPrimary)
         self.connection_thread.start()
 
+    # A constant loop that makes sure the client is connected to the primary server.
     def connectPrimary(self): 
         while True:
             try:
@@ -87,7 +90,7 @@ class Client:
                 print()
                 print("[" + msg.sender + "]: " + msg.message)
             except Exception as e:
-                print(str(e))
+                # if the old stream is closed due to server crash, reconnect to the new primary server
                 self.stream = self.stub.ChatStream(chat_pb2.ChatRequest(accountName=self.username, fromPrimary = False))
             time.sleep(0.5)
     # List all messages sent to the client.
