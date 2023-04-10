@@ -28,6 +28,9 @@ service Chat {
     // Gets server id
     rpc GetServerId (Empty) returns (GetServerIdResponse) {}
 
+    // Gets primary server id
+    rpc GetPrimaryServerId (Empty) returns (GetServerIdResponse) {}
+
     // Updates primary server
     rpc UpdatePrimaryServer (UpdatePrimaryServerRequest) returns (UpdatePrimaryServerResponse) {}
 }
@@ -38,6 +41,7 @@ message MessageSendRequest {
     string recipient = 1;
     string sender = 2;
     string message = 3;
+    bool fromPrimary = 4;
 }
 
 // Response for a message send
@@ -48,6 +52,7 @@ message MessageSendResponse {
 // Request to start a chat stream
 message ChatRequest {
     string accountName = 1;
+    bool fromPrimary = 2;
 }
 
 message SingleMessage {
@@ -58,6 +63,7 @@ message SingleMessage {
 // Create a new account
 message CreateAccountRequest {
     string accountName = 1;
+    bool fromPrimary = 2;
 }
 
 // Response for a create account request
@@ -68,6 +74,7 @@ message CreateAccountResponse {
 // Log into an account using username
 message LoginRequest {
     string accountName = 1;
+    bool fromPrimary = 2;
 }
 
 // Response for a login request
@@ -78,6 +85,7 @@ message LoginResponse {
 // Log out of an account using username
 message LogoutRequest {
     string accountName = 1;
+    bool fromPrimary = 2;
 }
 
 // Response for a logout request
@@ -98,6 +106,7 @@ message ListAccountsResponse {
 // Request to delete an account
 message DeleteAccountRequest {
     string accountName = 1;
+    bool fromPrimary = 2;
 }
 
 // Response for a delete account request
