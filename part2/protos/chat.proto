@@ -33,6 +33,12 @@ service Chat {
 
     // Updates primary server
     rpc UpdatePrimaryServer (UpdatePrimaryServerRequest) returns (UpdatePrimaryServerResponse) {}
+
+    // Server to server method: updates the chat length of a given user for the secondary servers
+    rpc UpdateChatLength (UpdateChatLengthRequest) returns (UpdateChatLengthResponse) {}
+
+    // Print all of the messages in the message queue for a given user
+    rpc PrintMessages (PrintMessagesRequest) returns (PrintMessagesResponse) {}
 }
 
 
@@ -130,4 +136,25 @@ message UpdatePrimaryServerRequest {
 // Response for an update primary server request
 message UpdatePrimaryServerResponse {
     bool success = 1;
+}
+
+// Request to update chat length
+message UpdateChatLengthRequest {
+    string accountName = 1;
+    int32 chatLength = 2;
+}
+
+// Response for an update chat length request
+message UpdateChatLengthResponse {
+    bool success = 1;
+}
+
+// Request to print messages
+message PrintMessagesRequest {
+    string accountName = 1;
+}
+
+// Response for a print messages request
+message PrintMessagesResponse {
+    repeated SingleMessage messages = 1;
 }

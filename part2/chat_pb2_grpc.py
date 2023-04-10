@@ -55,10 +55,25 @@ class ChatStub(object):
                 request_serializer=chat__pb2.Empty.SerializeToString,
                 response_deserializer=chat__pb2.GetServerIdResponse.FromString,
                 )
+        self.GetPrimaryServerId = channel.unary_unary(
+                '/greet.Chat/GetPrimaryServerId',
+                request_serializer=chat__pb2.Empty.SerializeToString,
+                response_deserializer=chat__pb2.GetServerIdResponse.FromString,
+                )
         self.UpdatePrimaryServer = channel.unary_unary(
                 '/greet.Chat/UpdatePrimaryServer',
                 request_serializer=chat__pb2.UpdatePrimaryServerRequest.SerializeToString,
                 response_deserializer=chat__pb2.UpdatePrimaryServerResponse.FromString,
+                )
+        self.UpdateChatLength = channel.unary_unary(
+                '/greet.Chat/UpdateChatLength',
+                request_serializer=chat__pb2.UpdateChatLengthRequest.SerializeToString,
+                response_deserializer=chat__pb2.UpdateChatLengthResponse.FromString,
+                )
+        self.PrintMessages = channel.unary_unary(
+                '/greet.Chat/PrintMessages',
+                request_serializer=chat__pb2.PrintMessagesRequest.SerializeToString,
+                response_deserializer=chat__pb2.PrintMessagesResponse.FromString,
                 )
 
 
@@ -122,8 +137,29 @@ class ChatServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetPrimaryServerId(self, request, context):
+        """Gets primary server id
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def UpdatePrimaryServer(self, request, context):
         """Updates primary server
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateChatLength(self, request, context):
+        """Server to server method: updates the chat length of a given user for the secondary servers
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def PrintMessages(self, request, context):
+        """Print all of the messages in the message queue for a given user
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -172,10 +208,25 @@ def add_ChatServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.Empty.FromString,
                     response_serializer=chat__pb2.GetServerIdResponse.SerializeToString,
             ),
+            'GetPrimaryServerId': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPrimaryServerId,
+                    request_deserializer=chat__pb2.Empty.FromString,
+                    response_serializer=chat__pb2.GetServerIdResponse.SerializeToString,
+            ),
             'UpdatePrimaryServer': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdatePrimaryServer,
                     request_deserializer=chat__pb2.UpdatePrimaryServerRequest.FromString,
                     response_serializer=chat__pb2.UpdatePrimaryServerResponse.SerializeToString,
+            ),
+            'UpdateChatLength': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateChatLength,
+                    request_deserializer=chat__pb2.UpdateChatLengthRequest.FromString,
+                    response_serializer=chat__pb2.UpdateChatLengthResponse.SerializeToString,
+            ),
+            'PrintMessages': grpc.unary_unary_rpc_method_handler(
+                    servicer.PrintMessages,
+                    request_deserializer=chat__pb2.PrintMessagesRequest.FromString,
+                    response_serializer=chat__pb2.PrintMessagesResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -325,6 +376,23 @@ class Chat(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
+    def GetPrimaryServerId(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/greet.Chat/GetPrimaryServerId',
+            chat__pb2.Empty.SerializeToString,
+            chat__pb2.GetServerIdResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
     def UpdatePrimaryServer(request,
             target,
             options=(),
@@ -338,5 +406,39 @@ class Chat(object):
         return grpc.experimental.unary_unary(request, target, '/greet.Chat/UpdatePrimaryServer',
             chat__pb2.UpdatePrimaryServerRequest.SerializeToString,
             chat__pb2.UpdatePrimaryServerResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpdateChatLength(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/greet.Chat/UpdateChatLength',
+            chat__pb2.UpdateChatLengthRequest.SerializeToString,
+            chat__pb2.UpdateChatLengthResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def PrintMessages(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/greet.Chat/PrintMessages',
+            chat__pb2.PrintMessagesRequest.SerializeToString,
+            chat__pb2.PrintMessagesResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

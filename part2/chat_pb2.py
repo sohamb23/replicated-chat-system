@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nchat.proto\x12\x05greet\"H\n\x12MessageSendRequest\x12\x11\n\trecipient\x18\x01 \x01(\t\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\"&\n\x13MessageSendResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\"\n\x0b\x43hatRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"0\n\rSingleMessage\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"+\n\x14\x43reateAccountRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"(\n\x15\x43reateAccountResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"#\n\x0cLoginRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\" \n\rLoginResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"$\n\rLogoutRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"!\n\x0eLogoutResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\".\n\x13ListAccountsRequest\x12\x17\n\x0f\x61\x63\x63ountWildcard\x18\x01 \x01(\t\"(\n\x14ListAccountsResponse\x12\x10\n\x08\x61\x63\x63ounts\x18\x01 \x03(\t\"+\n\x14\x44\x65leteAccountRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"(\n\x15\x44\x65leteAccountResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x07\n\x05\x45mpty\"\'\n\x13GetServerIdResponse\x12\x10\n\x08serverId\x18\x01 \x01(\x05\"5\n\x1aUpdatePrimaryServerRequest\x12\x17\n\x0fprimaryServerId\x18\x01 \x01(\x05\".\n\x1bUpdatePrimaryServerResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x32\xfb\x04\n\x04\x43hat\x12\x46\n\x0bSendMessage\x12\x19.greet.MessageSendRequest\x1a\x1a.greet.MessageSendResponse\"\x00\x12:\n\nChatStream\x12\x12.greet.ChatRequest\x1a\x14.greet.SingleMessage\"\x00\x30\x01\x12L\n\rCreateAccount\x12\x1b.greet.CreateAccountRequest\x1a\x1c.greet.CreateAccountResponse\"\x00\x12\x34\n\x05Login\x12\x13.greet.LoginRequest\x1a\x14.greet.LoginResponse\"\x00\x12\x37\n\x06Logout\x12\x14.greet.LogoutRequest\x1a\x15.greet.LogoutResponse\"\x00\x12I\n\x0cListAccounts\x12\x1a.greet.ListAccountsRequest\x1a\x1b.greet.ListAccountsResponse\"\x00\x12L\n\rDeleteAccount\x12\x1b.greet.DeleteAccountRequest\x1a\x1c.greet.DeleteAccountResponse\"\x00\x12\x39\n\x0bGetServerId\x12\x0c.greet.Empty\x1a\x1a.greet.GetServerIdResponse\"\x00\x12^\n\x13UpdatePrimaryServer\x12!.greet.UpdatePrimaryServerRequest\x1a\".greet.UpdatePrimaryServerResponse\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nchat.proto\x12\x05greet\"]\n\x12MessageSendRequest\x12\x11\n\trecipient\x18\x01 \x01(\t\x12\x0e\n\x06sender\x18\x02 \x01(\t\x12\x0f\n\x07message\x18\x03 \x01(\t\x12\x13\n\x0b\x66romPrimary\x18\x04 \x01(\x08\"&\n\x13MessageSendResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"7\n\x0b\x43hatRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\x12\x13\n\x0b\x66romPrimary\x18\x02 \x01(\x08\"0\n\rSingleMessage\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"@\n\x14\x43reateAccountRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\x12\x13\n\x0b\x66romPrimary\x18\x02 \x01(\x08\"(\n\x15\x43reateAccountResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"8\n\x0cLoginRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\x12\x13\n\x0b\x66romPrimary\x18\x02 \x01(\x08\" \n\rLoginResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"9\n\rLogoutRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\x12\x13\n\x0b\x66romPrimary\x18\x02 \x01(\x08\"!\n\x0eLogoutResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\".\n\x13ListAccountsRequest\x12\x17\n\x0f\x61\x63\x63ountWildcard\x18\x01 \x01(\t\"(\n\x14ListAccountsResponse\x12\x10\n\x08\x61\x63\x63ounts\x18\x01 \x03(\t\"@\n\x14\x44\x65leteAccountRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\x12\x13\n\x0b\x66romPrimary\x18\x02 \x01(\x08\"(\n\x15\x44\x65leteAccountResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x07\n\x05\x45mpty\"\'\n\x13GetServerIdResponse\x12\x10\n\x08serverId\x18\x01 \x01(\x05\"5\n\x1aUpdatePrimaryServerRequest\x12\x17\n\x0fprimaryServerId\x18\x01 \x01(\x05\".\n\x1bUpdatePrimaryServerResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"B\n\x17UpdateChatLengthRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\x12\x12\n\nchatLength\x18\x02 \x01(\x05\"+\n\x18UpdateChatLengthResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"+\n\x14PrintMessagesRequest\x12\x13\n\x0b\x61\x63\x63ountName\x18\x01 \x01(\t\"?\n\x15PrintMessagesResponse\x12&\n\x08messages\x18\x01 \x03(\x0b\x32\x14.greet.SingleMessage2\xe2\x06\n\x04\x43hat\x12\x46\n\x0bSendMessage\x12\x19.greet.MessageSendRequest\x1a\x1a.greet.MessageSendResponse\"\x00\x12:\n\nChatStream\x12\x12.greet.ChatRequest\x1a\x14.greet.SingleMessage\"\x00\x30\x01\x12L\n\rCreateAccount\x12\x1b.greet.CreateAccountRequest\x1a\x1c.greet.CreateAccountResponse\"\x00\x12\x34\n\x05Login\x12\x13.greet.LoginRequest\x1a\x14.greet.LoginResponse\"\x00\x12\x37\n\x06Logout\x12\x14.greet.LogoutRequest\x1a\x15.greet.LogoutResponse\"\x00\x12I\n\x0cListAccounts\x12\x1a.greet.ListAccountsRequest\x1a\x1b.greet.ListAccountsResponse\"\x00\x12L\n\rDeleteAccount\x12\x1b.greet.DeleteAccountRequest\x1a\x1c.greet.DeleteAccountResponse\"\x00\x12\x39\n\x0bGetServerId\x12\x0c.greet.Empty\x1a\x1a.greet.GetServerIdResponse\"\x00\x12@\n\x12GetPrimaryServerId\x12\x0c.greet.Empty\x1a\x1a.greet.GetServerIdResponse\"\x00\x12^\n\x13UpdatePrimaryServer\x12!.greet.UpdatePrimaryServerRequest\x1a\".greet.UpdatePrimaryServerResponse\"\x00\x12U\n\x10UpdateChatLength\x12\x1e.greet.UpdateChatLengthRequest\x1a\x1f.greet.UpdateChatLengthResponse\"\x00\x12L\n\rPrintMessages\x12\x1b.greet.PrintMessagesRequest\x1a\x1c.greet.PrintMessagesResponse\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'chat_pb2', globals())
@@ -21,41 +21,49 @@ if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   _MESSAGESENDREQUEST._serialized_start=21
-  _MESSAGESENDREQUEST._serialized_end=93
-  _MESSAGESENDRESPONSE._serialized_start=95
-  _MESSAGESENDRESPONSE._serialized_end=133
-  _CHATREQUEST._serialized_start=135
-  _CHATREQUEST._serialized_end=169
-  _SINGLEMESSAGE._serialized_start=171
-  _SINGLEMESSAGE._serialized_end=219
-  _CREATEACCOUNTREQUEST._serialized_start=221
-  _CREATEACCOUNTREQUEST._serialized_end=264
-  _CREATEACCOUNTRESPONSE._serialized_start=266
-  _CREATEACCOUNTRESPONSE._serialized_end=306
-  _LOGINREQUEST._serialized_start=308
-  _LOGINREQUEST._serialized_end=343
-  _LOGINRESPONSE._serialized_start=345
-  _LOGINRESPONSE._serialized_end=377
-  _LOGOUTREQUEST._serialized_start=379
-  _LOGOUTREQUEST._serialized_end=415
-  _LOGOUTRESPONSE._serialized_start=417
-  _LOGOUTRESPONSE._serialized_end=450
-  _LISTACCOUNTSREQUEST._serialized_start=452
-  _LISTACCOUNTSREQUEST._serialized_end=498
-  _LISTACCOUNTSRESPONSE._serialized_start=500
-  _LISTACCOUNTSRESPONSE._serialized_end=540
-  _DELETEACCOUNTREQUEST._serialized_start=542
-  _DELETEACCOUNTREQUEST._serialized_end=585
-  _DELETEACCOUNTRESPONSE._serialized_start=587
-  _DELETEACCOUNTRESPONSE._serialized_end=627
-  _EMPTY._serialized_start=629
-  _EMPTY._serialized_end=636
-  _GETSERVERIDRESPONSE._serialized_start=638
-  _GETSERVERIDRESPONSE._serialized_end=677
-  _UPDATEPRIMARYSERVERREQUEST._serialized_start=679
-  _UPDATEPRIMARYSERVERREQUEST._serialized_end=732
-  _UPDATEPRIMARYSERVERRESPONSE._serialized_start=734
-  _UPDATEPRIMARYSERVERRESPONSE._serialized_end=780
-  _CHAT._serialized_start=783
-  _CHAT._serialized_end=1418
+  _MESSAGESENDREQUEST._serialized_end=114
+  _MESSAGESENDRESPONSE._serialized_start=116
+  _MESSAGESENDRESPONSE._serialized_end=154
+  _CHATREQUEST._serialized_start=156
+  _CHATREQUEST._serialized_end=211
+  _SINGLEMESSAGE._serialized_start=213
+  _SINGLEMESSAGE._serialized_end=261
+  _CREATEACCOUNTREQUEST._serialized_start=263
+  _CREATEACCOUNTREQUEST._serialized_end=327
+  _CREATEACCOUNTRESPONSE._serialized_start=329
+  _CREATEACCOUNTRESPONSE._serialized_end=369
+  _LOGINREQUEST._serialized_start=371
+  _LOGINREQUEST._serialized_end=427
+  _LOGINRESPONSE._serialized_start=429
+  _LOGINRESPONSE._serialized_end=461
+  _LOGOUTREQUEST._serialized_start=463
+  _LOGOUTREQUEST._serialized_end=520
+  _LOGOUTRESPONSE._serialized_start=522
+  _LOGOUTRESPONSE._serialized_end=555
+  _LISTACCOUNTSREQUEST._serialized_start=557
+  _LISTACCOUNTSREQUEST._serialized_end=603
+  _LISTACCOUNTSRESPONSE._serialized_start=605
+  _LISTACCOUNTSRESPONSE._serialized_end=645
+  _DELETEACCOUNTREQUEST._serialized_start=647
+  _DELETEACCOUNTREQUEST._serialized_end=711
+  _DELETEACCOUNTRESPONSE._serialized_start=713
+  _DELETEACCOUNTRESPONSE._serialized_end=753
+  _EMPTY._serialized_start=755
+  _EMPTY._serialized_end=762
+  _GETSERVERIDRESPONSE._serialized_start=764
+  _GETSERVERIDRESPONSE._serialized_end=803
+  _UPDATEPRIMARYSERVERREQUEST._serialized_start=805
+  _UPDATEPRIMARYSERVERREQUEST._serialized_end=858
+  _UPDATEPRIMARYSERVERRESPONSE._serialized_start=860
+  _UPDATEPRIMARYSERVERRESPONSE._serialized_end=906
+  _UPDATECHATLENGTHREQUEST._serialized_start=908
+  _UPDATECHATLENGTHREQUEST._serialized_end=974
+  _UPDATECHATLENGTHRESPONSE._serialized_start=976
+  _UPDATECHATLENGTHRESPONSE._serialized_end=1019
+  _PRINTMESSAGESREQUEST._serialized_start=1021
+  _PRINTMESSAGESREQUEST._serialized_end=1064
+  _PRINTMESSAGESRESPONSE._serialized_start=1066
+  _PRINTMESSAGESRESPONSE._serialized_end=1129
+  _CHAT._serialized_start=1132
+  _CHAT._serialized_end=1998
 # @@protoc_insertion_point(module_scope)

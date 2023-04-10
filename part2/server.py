@@ -2,10 +2,12 @@ import grpc
 import chat_pb2
 import chat_pb2_grpc
 import re
+import os
 import sys
 from concurrent import futures
 from threading import Lock, Thread
 import socket
+import csv
 from collections import defaultdict
 import time
 
@@ -17,6 +19,8 @@ SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.1
 
 # multiple server addrs:
 # SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053", 4: "10.250.147.180:50051", 5: "10.250.147.180:50052", 6: "10.250.147.180:50053"}
+
+FILE_PATH = "ACTION_LOG.csv"
 
 
 
@@ -33,38 +37,92 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         self.users = set()
         self.chat_locks = defaultdict(lambda: Lock()) # locks for each k, v pair in self.chats
         self.chats = defaultdict(lambda: [])
+        self.chat_lens = defaultdict(lambda: 0)
         self.online = set()
         self.server_addrs = SERVER_ADDRS
         self.primary_id = None
         self.id = int(id)
-        time.sleep(5)
+        self.methodMap = {"CreateAccount": "CreateAccountRequest", "DeleteAccount": "DeleteAccountRequest", "Login": "LoginRequest", "Logout": "LogoutRequest", "SendMessage": "MessageSendRequest"}
+        if(os.path.exists(FILE_PATH)):
+            # self.log = open(FILE_PATH, "a+")
+            # self.writer = csv.writer(self.log) 
+            reader = csv.reader(open(FILE_PATH, "r"))
+            for row in reader:
+                clientMethod = self.methodMap[row[0]]
+                # args = row[1:-1]
+                if clientMethod != "MessageSendRequest":
+                    getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(accountName = row[1]), row[-1])
+                else:
+                    getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(sender = row[1], recipient = row[2], message = row[3]), row[-1])
+        else:
+            with open(FILE_PATH, "a+") as f:
+                f.close()
+        
+        time.sleep(1)
         self.election_thread = Thread(target=self.ElectLeader)
         self.election_thread.start()
         
+    # check if this server is the primary
+    def isPrimary(self):
+        return self.id == self.primary_id
+    
+    def GetPrimaryServerId(self, request, context):
+        return chat_pb2.GetServerIdResponse(serverId=self.primary_id)
+    
 
-    # report failure if account already exists and add user otherwise
+   # report failure if account already exists and add user otherwise
     def CreateAccount(self, request, context):
-        user = request.accountName
-        with self.users_lock:
-            success = user not in self.users
-            if success:
-                print("adding user: " + user)
-                self.users.add(user)
+        if request.fromPrimary or self.isPrimary():
+            user = request.accountName
+            with self.users_lock:
+                prev_success = user not in self.users
+                if prev_success:
+                    print(str(self.id) + ": adding user: " + user)
+                    self.users.add(user)
+                success = user in self.users and prev_success
+                ## forward create account to non primary servers
+                if self.isPrimary() and success:
+                    for server_id in self.server_addrs:
+                        if server_id != self.id:
+                            try:
+                                with grpc.insecure_channel(self.server_addrs[server_id]) as channel:
+                                    stub = chat_pb2_grpc.ChatStub(channel)
+                                    stub.CreateAccount(chat_pb2.CreateAccountRequest(accountName=user, fromPrimary=True))
+                            except:
+                                print("secondary server " + str(server_id) + " is down")
+        else:
+            success = False
+            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
         return chat_pb2.CreateAccountResponse(success=success)
     
     # report failure if account doesn't exist and delete user otherwise
     def DeleteAccount(self, request, context):
-        user = request.accountName
-        with self.users_lock:
-            success = user in self.users
-            if success:
-                print("deleting user: " + user)
-                self.users.discard(user)
-                self.online.discard(user)
-                with self.chat_locks[user]:
-                    if user in self.chats:
-                        del self.chats[user] # delete undelivered chats if you are deleting the account
-                del self.chat_locks[user]
+        if request.fromPrimary or self.isPrimary():
+            user = request.accountName
+            with self.users_lock:
+                success = user in self.users
+                if success:
+                    print("deleting user: " + user)
+                    self.users.discard(user)
+                    self.online.discard(user)
+                    with self.chat_locks[user]:
+                        if user in self.chats:
+                            del self.chats[user] # delete undelivered chats if you are deleting the account
+                    del self.chat_locks[user]
+                ## forward delete account to non primary servers
+                if self.isPrimary() and success:
+                    for server_id in self.server_addrs:
+                        if server_id != self.id:
+                            try:
+                                with grpc.insecure_channel(self.server_addrs[server_id]) as channel:
+                                    stub = chat_pb2_grpc.ChatStub(channel)
+                                    stub.DeleteAccount(chat_pb2.DeleteAccountRequest(accountName=user, fromPrimary=True))
+                            except:
+                                print("secondary server " + str(server_id) + " is down")
+        else:
+            success = False
+            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
+            
         return chat_pb2.DeleteAccountResponse(success=success)
     
     # report failure if account doesn't exist and return list of accounts that match wildcard otherwise
@@ -78,61 +136,132 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
 
     # report failure if account doesn't exist and add user to online list otherwise
     def Login(self, request, context):
-        user = request.accountName
-        print("logging in user: " + user)
-        with self.users_lock:
-            self.online.add(user)
-            success = user in self.users
+        if request.fromPrimary or self.isPrimary():
+            user = request.accountName
+            print("logging in user: " + user)
+            with self.users_lock:
+                self.online.add(user)
+                success = user in self.users
+                ## forward login to non primary servers
+                if self.isPrimary() and success:
+                    for server_id in self.server_addrs:
+                        if server_id != self.id:
+                            try:
+                                with grpc.insecure_channel(self.server_addrs[server_id]) as channel:
+                                    stub = chat_pb2_grpc.ChatStub(channel)
+                                    stub.Login(chat_pb2.LoginRequest(accountName=user, fromPrimary=True))
+                            except:
+                                print("secondary server " + str(server_id) + " is down")
+        else:
+            success = False
+            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
         return chat_pb2.LoginResponse(success=success)
+    
+    # Primary server to secondary server method: update the index of the last chat message sent to the user
+    def UpdateChatLength(self, request, context):
+        with self.chat_locks[request.accountName]:
+            self.chat_lens[request.accountName] = request.chatLength
+        return chat_pb2.UpdateChatLengthResponse(success=True)
 
     # report failure if account doesn't exist and remove user from online list otherwise
     def Logout(self, request, context):
-        user = request.accountName
-        print("logging out user: " + user)
-        with self.users_lock:
-            success = user in self.online
-            self.online.discard(user)
+        if request.fromPrimary or self.isPrimary():
+            user = request.accountName
+            print("logging out user: " + user)
+            with self.users_lock:
+                success = user in self.online
+                self.online.discard(user)
+                ## forward logout to non primary servers
+                if self.isPrimary() and success:
+                    for server_id in self.server_addrs:
+                        if server_id != self.id:
+                            try:
+                                with grpc.insecure_channel(self.server_addrs[server_id]) as channel:
+                                    stub = chat_pb2_grpc.ChatStub(channel)
+                                    stub.Logout(chat_pb2.LogoutRequest(accountName=user, fromPrimary=True))
+                            except:
+                                print("secondary server " + str(server_id) + " is down")
+        else:
+            success = False
+            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
         return chat_pb2.LogoutResponse(success=success)
 
     # report failure if recipient doesn't exist and send message otherwise
     def SendMessage(self, request, context):
-        sender = request.sender
-        recipient = request.recipient
-        message = request.message
-        print(f"received message from {sender} to {recipient}: {message}")
-        self.users_lock.acquire(blocking=True)
-        if recipient not in self.users:
-            self.users_lock.release()
-            return chat_pb2.MessageSendResponse(success=False)
+        if request.fromPrimary or self.isPrimary():
+            sender = request.sender
+            recipient = request.recipient
+            message = request.message
+            print(f"received message from {sender} to {recipient}: {message}")
+            with self.users_lock:
+                success = recipient in self.users
+                if success:
+                    message = chat_pb2.SingleMessage(sender=sender, message=message)
+                    with self.chat_locks[recipient]:
+                        self.chats[recipient].insert(0, message)
+                ## forward send message to non primary servers
+                if self.isPrimary() and success:
+                    for server_id in self.server_addrs:
+                        if server_id != self.id:
+                            try:
+                                with grpc.insecure_channel(self.server_addrs[server_id]) as channel:
+                                    stub = chat_pb2_grpc.ChatStub(channel)
+                                    stub.SendMessage(chat_pb2.MessageSendRequest(sender=request.sender, recipient=request.recipient, message=request.message, fromPrimary=True))
+                            except Exception as e:
+                                print("secondary server " + str(server_id) + " is down")
         else:
-            self.users_lock.release()
-            message = chat_pb2.SingleMessage(sender=sender, message=message)
-            with self.chat_locks[recipient]:
-                self.chats[recipient].append(message)
-            return chat_pb2.MessageSendResponse(success=True)
+            success = False
+            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
+        return chat_pb2.MessageSendResponse(success = success)
 
     # report failure if account doesn't exist and start chat stream otherwise
     def ChatStream(self, request, context):
-        user = request.accountName
-        print(f"started chat stream for {user}")
-        # always make sure to release this; note that this needs to intermittently release
-        self.users_lock.acquire(blocking=True)
-        while user in self.online:
-            assert user in self.users, "user does not exist or no longer exists"
-            # release so that the streams aren't constantly holding onto the lock
-            self.users_lock.release()
-            with self.chat_locks[user]:
-                if self.chats[user]:
-                    print("sending message to " + user)
-                    yield self.chats[user].pop(0)
-            # reacquire lock before checking while condition
+        if self.isPrimary():
+            user = request.accountName
+            print(f"started chat stream for {user}")
+            # always make sure to release this; note that this needs to intermittently release
             self.users_lock.acquire(blocking=True)
-        # release lock before stopping stream
-        self.users_lock.release()
+            while user in self.online:
+                assert user in self.users, "user does not exist or no longer exists"
+                # release so that the streams aren't constantly holding onto the lock
+                self.users_lock.release()
+                with self.chat_locks[user]:
+                    if len(self.chats[user]) != self.chat_lens[user]:    # if new messages have been added
+                        diff = len(self.chats[user]) - self.chat_lens[user]
+                        self.chat_lens[user] = len(self.chats[user])
+                        # update chat lens for all secondary servers
+                        for server_id in self.server_addrs:
+                            if server_id != self.id:
+                                try:
+                                    with grpc.insecure_channel(self.server_addrs[server_id]) as channel:
+                                        stub = chat_pb2_grpc.ChatStub(channel)
+                                        stub.UpdateChatLength(chat_pb2.UpdateChatLengthRequest(accountName=user, chatLength=self.chat_lens[user]))
+                                except:
+                                    print("secondary server " + str(server_id) + " is down")
+                        print("sending message(s) to " + user)
+                        for i in range(diff):
+                            yield self.chats[user][i]
+                # reacquire lock before checking while condition
+                self.users_lock.acquire(blocking=True)
+            # release lock before stopping stream
+            self.users_lock.release()
+        else:
+            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
     
+    def PrintMessages(self, request, context):
+        user = request.accountName
+        print(f"printing messages for {user}")
+        response = chat_pb2.PrintMessagesResponse()
+        with self.chat_locks[user]:
+            response.messages.extend(self.chats[user])
+        return response
+
+    
+    # Get the id of the server
     def GetServerId(self, request, context):
         return chat_pb2.GetServerIdResponse(serverId=self.id)
     
+    # Update the primary server id
     def UpdatePrimaryServer(self, request, context):
         self.primary_id = int(request.primaryServerId)
         print(str(self.id) + ": NEW PRIMARY SERVER: " + self.server_addrs[self.primary_id])
@@ -153,20 +282,23 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                             if int(response.serverId) < min_id:
                                 min_id = int(response.serverId)
                     except:
-                        print(str(self.id) + ": failed to connect to server " + self.server_addrs[id])
+                        #print(str(self.id) + ": failed to connect to server " + self.server_addrs[id])
+                        pass
             
             if self.primary_id  != min_id:
                 self.primary_id = min_id
                 print(str(self.id) + ": NEW PRIMARY SERVER: " + self.server_addrs[self.primary_id])
                 # Update the primary server for all of the other servers
-                for id in self.server_addrs:
-                    if id != self.id:
-                        try:
-                            with grpc.insecure_channel(self.server_addrs[id]) as channel:
-                                stub = chat_pb2_grpc.ChatStub(channel)
-                                stub.UpdatePrimaryServer(chat_pb2.UpdatePrimaryServerRequest(primaryServerId=self.primary_id))
-                        except:
-                            print(str(self.id) + ": failed to connect to server " + self.server_addrs[id])
+                if self.id == self.primary_id:
+                    for id in self.server_addrs:
+                        if id != self.id:
+                            try:
+                                with grpc.insecure_channel(self.server_addrs[id]) as channel:
+                                    stub = chat_pb2_grpc.ChatStub(channel)
+                                    stub.UpdatePrimaryServer(chat_pb2.UpdatePrimaryServerRequest(primaryServerId=self.primary_id))
+                            except:
+                                #print(str(self.id) + ": failed to connect to server " + self.server_addrs[id])
+                                pass
             time.sleep(1)
         
 
