@@ -8,16 +8,19 @@ from threading import Lock, Thread
 import socket
 from collections import defaultdict
 import time
+import csv
+import os
 
 # Server class that implements the ChatServicer interface defined by proto file.
 # This class is responsible for handling the RPC calls from the client.
 
 # server addrs for my machine
-SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053"}
+SERVER_ADDRS = {1: "10.250.147.180:50051", 2: "10.250.147.180:50052", 3: "10.250.147.180:50053"}
 
 # multiple server addrs:
 # SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053", 4: "10.250.147.180:50051", 5: "10.250.147.180:50052", 6: "10.250.147.180:50053"}
 
+FILE_PATH = "ACTION_LOG.csv"
 
 
 # 10.250.147.180:50051
@@ -37,6 +40,36 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         self.server_addrs = SERVER_ADDRS
         self.primary_id = None
         self.id = int(id)
+        self.methodMap = {"CreateAccount": "CreateAccountRequest", "DeleteAccount": "DeleteAccountRequest", "Login": "LoginRequest", "Logout": "LogoutRequest", "SendMessage": "MessageSendRequest"}
+        if(os.path.exists(FILE_PATH)):
+            # self.log = open(FILE_PATH, "a+")
+            # self.writer = csv.writer(self.log) 
+            reader = csv.reader(open(FILE_PATH, "r"))
+            for row in reader:
+                clientMethod = self.methodMap[row[0]]
+                # args = row[1:-1]
+                if clientMethod != "MessageSendRequest":
+                    getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(accountName = row[1]), row[-1])
+                else:
+                    getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(sender = row[1], recipient = row[2], message = row[3]), row[-1])
+        else:
+            with open(FILE_PATH, "a+") as f:
+                f.close()
+            # self.writer = csv.writer(self.log)
+           
+
+        # with self.log as f:
+            # self.writer.writerow(["Action", "Request", "Context"])
+
+        # self.writer.writerow(["Action", "Request", "Context"])
+                # self.writer.writerow(["timestamp", "sender", "recipient", "message"])
+        # with open("action_log.csv", "r") as f:
+        #     reader = csv.reader(f)
+        #     for row in reader:
+
+        #         self.action_log.append(row)
+        self.action_log = []
+        # self.CreateAccount("")
         time.sleep(5)
         self.election_thread = Thread(target=self.ElectLeader)
         self.election_thread.start()
@@ -50,6 +83,16 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
             if success:
                 print("adding user: " + user)
                 self.users.add(user)
+        print(request)
+        print(type(request))
+        # with open(FILE_PATH, "w") as f:
+        with open(FILE_PATH, "a+") as f:
+            if(self.primary_id == self.id):
+                writer = csv.writer(f)
+                writer.writerow(["CreateAccount", request.accountName, context])
+            f.close()
+        # if(self.primary_id == self.id):
+        #     self.writer.writerow(["CreateAccount", request, context])
         return chat_pb2.CreateAccountResponse(success=success)
     
     # report failure if account doesn't exist and delete user otherwise
@@ -65,6 +108,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                     if user in self.chats:
                         del self.chats[user] # delete undelivered chats if you are deleting the account
                 del self.chat_locks[user]
+        with open(FILE_PATH, "a+") as f:
+            if(self.primary_id == self.id):
+                writer = csv.writer(f)
+                writer.writerow(["DeleteAccount", request.accountName, context])
+            f.close()
         return chat_pb2.DeleteAccountResponse(success=success)
     
     # report failure if account doesn't exist and return list of accounts that match wildcard otherwise
@@ -83,6 +131,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         with self.users_lock:
             self.online.add(user)
             success = user in self.users
+        with open(FILE_PATH, "a+") as f:
+            if(self.primary_id == self.id):
+                writer = csv.writer(f)
+                writer.writerow(["Login", request.accountName, context])
+            f.close()
         return chat_pb2.LoginResponse(success=success)
 
     # report failure if account doesn't exist and remove user from online list otherwise
@@ -92,6 +145,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         with self.users_lock:
             success = user in self.online
             self.online.discard(user)
+        with open(FILE_PATH, "a+") as f:
+            if(self.primary_id == self.id):
+                writer = csv.writer(f)
+                writer.writerow(["Logout", request.accountName, context])
+            f.close()
         return chat_pb2.LogoutResponse(success=success)
 
     # report failure if recipient doesn't exist and send message otherwise
@@ -109,6 +167,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
             message = chat_pb2.SingleMessage(sender=sender, message=message)
             with self.chat_locks[recipient]:
                 self.chats[recipient].append(message)
+            with open(FILE_PATH, "a+") as f:
+                if(self.primary_id == self.id):
+                    writer = csv.writer(f)
+                    writer.writerow(["SendMessage", request.sender, request.recipient, request.message, context])
+                f.close()
             return chat_pb2.MessageSendResponse(success=True)
 
     # report failure if account doesn't exist and start chat stream otherwise

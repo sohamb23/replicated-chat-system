@@ -4,7 +4,7 @@ import grpc
 import threading
 import sys
 
-DEFAULT_SERVER_ADDR = '10.250.180.4'
+DEFAULT_SERVER_ADDR = '10.250.147.180'
 DEFAULT_PORT = "50051"
 # c's address: '10.228.32.66'
 
