@@ -87,6 +87,7 @@ class Client:
                 print()
                 print("[" + msg.sender + "]: " + msg.message)
             except Exception as e:
+                print(str(e))
                 self.stream = self.stub.ChatStream(chat_pb2.ChatRequest(accountName=self.username, fromPrimary = False))
             time.sleep(0.5)
     # List all messages sent to the client.

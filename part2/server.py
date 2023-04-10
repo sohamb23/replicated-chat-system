@@ -15,10 +15,10 @@ import time
 # This class is responsible for handling the RPC calls from the client.
 
 # server addrs for my machine
-SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053"}
+# SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053"}
 
 # multiple server addrs:
-# SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053", 4: "10.250.147.180:50051", 5: "10.250.147.180:50052", 6: "10.250.147.180:50053"}
+SERVER_ADDRS = {1: "10.250.11.129:50051", 2: "10.250.11.129:50052", 3: "10.250.11.129:50053", 4: "10.250.147.180:50051", 5: "10.250.147.180:50052", 6: "10.250.147.180:50053"}
 
 FILE_PATH = "ACTION_LOG.csv"
 
@@ -42,7 +42,14 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         self.server_addrs = SERVER_ADDRS
         self.primary_id = None
         self.id = int(id)
-        self.methodMap = {"CreateAccount": "CreateAccountRequest", "DeleteAccount": "DeleteAccountRequest", "Login": "LoginRequest", "Logout": "LogoutRequest", "SendMessage": "MessageSendRequest"}
+        self.finished_setup = False
+        self.methodMap = {"CreateAccount": "CreateAccountRequest", "DeleteAccount": "DeleteAccountRequest", "Login": "LoginRequest", "Logout": "LogoutRequest", "SendMessage": "MessageSendRequest", "UpdateChatLength": "UpdateChatLengthRequest"}
+        time.sleep(1)
+        self.election_thread = Thread(target=self.ElectLeader)
+        self.election_thread.start()
+
+        while self.primary_id == None:
+            time.sleep(1)
         if(os.path.exists(FILE_PATH)):
             # self.log = open(FILE_PATH, "a+")
             # self.writer = csv.writer(self.log) 
@@ -50,18 +57,18 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
             for row in reader:
                 clientMethod = self.methodMap[row[0]]
                 # args = row[1:-1]
-                if clientMethod != "MessageSendRequest":
-                    getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(accountName = row[1]), row[-1])
+                if clientMethod != "MessageSendRequest" and clientMethod != "UpdateChatLengthRequest":
+                    getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(accountName = row[1], fromPrimary = False), row[-1])
+                elif clientMethod == "UpdateChatLengthRequest":
+                    getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(accountName = row[1], chatLength = int(row[2])), row[-1])
                 else:
-                    getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(sender = row[1], recipient = row[2], message = row[3]), row[-1])
+                    getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(sender = row[1], recipient = row[2], message = row[3], fromPrimary = False), row[-1])
         else:
             with open(FILE_PATH, "a+") as f:
                 f.close()
         
-        time.sleep(1)
-        self.election_thread = Thread(target=self.ElectLeader)
-        self.election_thread.start()
-        
+        self.finished_setup = True
+
     # check if this server is the primary
     def isPrimary(self):
         return self.id == self.primary_id
@@ -81,7 +88,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                     self.users.add(user)
                 success = user in self.users and prev_success
                 ## forward create account to non primary servers
-                if self.isPrimary() and success:
+                if self.isPrimary() and success and self.finished_setup:
+                    with open(FILE_PATH, "a+") as f:
+                        writer = csv.writer(f)
+                        writer.writerow(["CreateAccount", request.accountName, context])
+                        f.close()
                     for server_id in self.server_addrs:
                         if server_id != self.id:
                             try:
@@ -92,7 +103,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                                 print("secondary server " + str(server_id) + " is down")
         else:
             success = False
-            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
+            print("not primary server, connect to primary server")
         return chat_pb2.CreateAccountResponse(success=success)
     
     # report failure if account doesn't exist and delete user otherwise
@@ -110,7 +121,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                             del self.chats[user] # delete undelivered chats if you are deleting the account
                     del self.chat_locks[user]
                 ## forward delete account to non primary servers
-                if self.isPrimary() and success:
+                if self.isPrimary() and success and self.finished_setup:
+                    with open(FILE_PATH, "a+") as f:
+                        writer = csv.writer(f)
+                        writer.writerow(["DeleteAccount", request.accountName, context])
+                        f.close()
                     for server_id in self.server_addrs:
                         if server_id != self.id:
                             try:
@@ -121,7 +136,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                                 print("secondary server " + str(server_id) + " is down")
         else:
             success = False
-            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
+            print("not primary server, connect to primary server")
             
         return chat_pb2.DeleteAccountResponse(success=success)
     
@@ -143,7 +158,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                 self.online.add(user)
                 success = user in self.users
                 ## forward login to non primary servers
-                if self.isPrimary() and success:
+                if self.isPrimary() and success and self.finished_setup:
+                    with open(FILE_PATH, "a+") as f:
+                        writer = csv.writer(f)
+                        writer.writerow(["Login", request.accountName, context])
+                        f.close()
                     for server_id in self.server_addrs:
                         if server_id != self.id:
                             try:
@@ -154,13 +173,14 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                                 print("secondary server " + str(server_id) + " is down")
         else:
             success = False
-            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
+            print("not primary server, connect to primary server")
         return chat_pb2.LoginResponse(success=success)
     
     # Primary server to secondary server method: update the index of the last chat message sent to the user
     def UpdateChatLength(self, request, context):
         with self.chat_locks[request.accountName]:
             self.chat_lens[request.accountName] = request.chatLength
+            print(str(self.id) + ": updating chat length for user " + request.accountName + " to " + str(request.chatLength))
         return chat_pb2.UpdateChatLengthResponse(success=True)
 
     # report failure if account doesn't exist and remove user from online list otherwise
@@ -172,7 +192,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                 success = user in self.online
                 self.online.discard(user)
                 ## forward logout to non primary servers
-                if self.isPrimary() and success:
+                if self.isPrimary() and success and self.finished_setup:
+                    with open(FILE_PATH, "a+") as f:
+                        writer = csv.writer(f)
+                        writer.writerow(["Logout", request.accountName, context])
+                        f.close()
                     for server_id in self.server_addrs:
                         if server_id != self.id:
                             try:
@@ -183,7 +207,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                                 print("secondary server " + str(server_id) + " is down")
         else:
             success = False
-            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
+            print("not primary server, connect to primary server")
         return chat_pb2.LogoutResponse(success=success)
 
     # report failure if recipient doesn't exist and send message otherwise
@@ -200,7 +224,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                     with self.chat_locks[recipient]:
                         self.chats[recipient].insert(0, message)
                 ## forward send message to non primary servers
-                if self.isPrimary() and success:
+                if self.isPrimary() and success and self.finished_setup:
+                    with open(FILE_PATH, "a+") as f:
+                        writer = csv.writer(f)
+                        writer.writerow(["SendMessage", request.sender, request.recipient, request.message, context])
+                        f.close()
                     for server_id in self.server_addrs:
                         if server_id != self.id:
                             try:
@@ -211,7 +239,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                                 print("secondary server " + str(server_id) + " is down")
         else:
             success = False
-            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
+            print("not primary server, connect to primary server")
         return chat_pb2.MessageSendResponse(success = success)
 
     # report failure if account doesn't exist and start chat stream otherwise
@@ -238,6 +266,11 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                                         stub.UpdateChatLength(chat_pb2.UpdateChatLengthRequest(accountName=user, chatLength=self.chat_lens[user]))
                                 except:
                                     print("secondary server " + str(server_id) + " is down")
+                        if self.finished_setup:
+                            with open(FILE_PATH, "a+") as f:
+                                writer = csv.writer(f)
+                                writer.writerow(["UpdateChatLength", request.accountName, self.chat_lens[user], context])
+                                f.close()
                         print("sending message(s) to " + user)
                         for i in range(diff):
                             yield self.chats[user][i]
@@ -246,7 +279,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
             # release lock before stopping stream
             self.users_lock.release()
         else:
-            print("not primary server, connect to primary server: " + self.server_addrs[self.primary_id])
+            print("not primary server, connect to primary server")
     
     def PrintMessages(self, request, context):
         user = request.accountName
