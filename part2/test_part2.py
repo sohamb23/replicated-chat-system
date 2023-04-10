@@ -119,5 +119,12 @@ class TestClient:
         response = self.client.SendMessage('nonexistent', 'hello')
         assert response == False
         self.client.Logout()
+
+    def test_persistence(self):
+        p3.terminate()
+        p1 = Process(target=server.serve, args=('50051', '1'))
+        p1.start()
+        assert self.client.Login('test1') == True
+
         
 # exit pytest

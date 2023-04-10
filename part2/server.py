@@ -27,6 +27,7 @@ FILE_PATH = "ACTION_LOG.csv"
 # 10.250.147.180:50051
 
 ## server addrs for multiple machines
+
 class ChatServicer(chat_pb2_grpc.ChatServicer):
 
     # initialize the server with empty users, chats, and online lists
@@ -279,6 +280,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         else:
             print("not primary server, connect to primary server")
     
+    # Print all messages for a given user
     def PrintMessages(self, request, context):
         user = request.accountName
         print(f"printing messages for {user}")
