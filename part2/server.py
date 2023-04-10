@@ -44,19 +44,17 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
         self.id = int(id)
         self.finished_setup = False
         self.methodMap = {"CreateAccount": "CreateAccountRequest", "DeleteAccount": "DeleteAccountRequest", "Login": "LoginRequest", "Logout": "LogoutRequest", "SendMessage": "MessageSendRequest", "UpdateChatLength": "UpdateChatLengthRequest"}
+        #method map creates a dictionary that maps the server method name to the client method that would be called to a server
         time.sleep(1)
         self.election_thread = Thread(target=self.ElectLeader)
         self.election_thread.start()
 
         while self.primary_id == None:
             time.sleep(1)
-        if(os.path.exists(FILE_PATH)):
-            # self.log = open(FILE_PATH, "a+")
-            # self.writer = csv.writer(self.log) 
+        if(os.path.exists(FILE_PATH)): #check whether file exists, if not create it in else
             reader = csv.reader(open(FILE_PATH, "r"))
-            for row in reader:
+            for row in reader: #loop through rows of the csv file, running server methods according to the arguments stored in the csv file, also instantiating chat_pb2 objects to replicate client making server calls and allowing for each server to be reinitialized at the primary state
                 clientMethod = self.methodMap[row[0]]
-                # args = row[1:-1]
                 if clientMethod != "MessageSendRequest" and clientMethod != "UpdateChatLengthRequest":
                     getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(accountName = row[1], fromPrimary = False), row[-1])
                 elif clientMethod == "UpdateChatLengthRequest":
@@ -65,7 +63,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                     getattr(self, row[0])(getattr(chat_pb2, self.methodMap[row[0]])(sender = row[1], recipient = row[2], message = row[3], fromPrimary = False), row[-1])
         else:
             with open(FILE_PATH, "a+") as f:
-                f.close()
+                f.close() #close file to avoid potential I/O issues
         
         self.finished_setup = True
 
@@ -92,7 +90,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                 if self.isPrimary() and success and self.finished_setup:
                     with open(FILE_PATH, "a+") as f:
                         writer = csv.writer(f)
-                        writer.writerow(["CreateAccount", request.accountName, context])
+                        writer.writerow(["CreateAccount", request.accountName, context]) #write account name to the csv, only piece of additional information necessary to replicate the function call
                         f.close()
                     for server_id in self.server_addrs:
                         if server_id != self.id:
@@ -125,7 +123,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                 if self.isPrimary() and success and self.finished_setup:
                     with open(FILE_PATH, "a+") as f:
                         writer = csv.writer(f)
-                        writer.writerow(["DeleteAccount", request.accountName, context])
+                        writer.writerow(["DeleteAccount", request.accountName, context]) #write account name to the csv, only piece of additional information necessary to replicate the function call
                         f.close()
                     for server_id in self.server_addrs:
                         if server_id != self.id:
@@ -162,7 +160,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                 if self.isPrimary() and success and self.finished_setup:
                     with open(FILE_PATH, "a+") as f:
                         writer = csv.writer(f)
-                        writer.writerow(["Login", request.accountName, context])
+                        writer.writerow(["Login", request.accountName, context]) #write account name to the csv, only piece of additional information necessary to replicate the function call
                         f.close()
                     for server_id in self.server_addrs:
                         if server_id != self.id:
@@ -196,7 +194,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                 if self.isPrimary() and success and self.finished_setup:
                     with open(FILE_PATH, "a+") as f:
                         writer = csv.writer(f)
-                        writer.writerow(["Logout", request.accountName, context])
+                        writer.writerow(["Logout", request.accountName, context]) #write account name to the csv, only piece of additional information necessary to replicate the function call
                         f.close()
                     for server_id in self.server_addrs:
                         if server_id != self.id:
@@ -228,7 +226,7 @@ class ChatServicer(chat_pb2_grpc.ChatServicer):
                 if self.isPrimary() and success and self.finished_setup:
                     with open(FILE_PATH, "a+") as f:
                         writer = csv.writer(f)
-                        writer.writerow(["SendMessage", request.sender, request.recipient, request.message, context])
+                        writer.writerow(["SendMessage", request.sender, request.recipient, request.message, context]) #write sender, recipient, message to the csv, necessary pieces of information to replicate the function call
                         f.close()
                     for server_id in self.server_addrs:
                         if server_id != self.id:
