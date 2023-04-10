@@ -27,8 +27,6 @@ FILE_PATH = "ACTION_LOG.csv"
 # 10.250.147.180:50051
 
 ## server addrs for multiple machines
-#TODO: SERVER_ADDRS_MULTIPLE: add server addrs for multiple machines
-
 class ChatServicer(chat_pb2_grpc.ChatServicer):
 
     # initialize the server with empty users, chats, and online lists
